@@ -1,0 +1,647 @@
+pages: 17
+
+===== PAGE 1 =====
+
+AGENDA NUMÉRIQUE ET INTELLIGENCE ARTIFICIELLE
+POUR REPENSER LE TOURISME
+Cameroon AI Tourism
+Cahier des charges du projet
+« Discover Cameroon. Understand Cameroon. Experience Cameroon. »
+🤖 Assistant IA
+ 🎙️ Voix
+ 🗺️ Carte interactive
+🧳 Itinéraires intelligents
+ 💰 Budget intelligent
+ 🏛️ Patrimoine culturel
+🌿 Écotourisme
+ 🗣️ Learn Cameroon
+Cameroon AI Tourism — Cahier des charges — Page 1 / 17
+===== PAGE 2 =====
+
+Sommaire
+Présentation du projet
+Problématique
+Objectif général
+Objectifs spécifiques
+Utilisateurs
+Fonctionnalités principales — Assistant touristique IA
+Assistant vocal
+Multilingue
+Générateur intelligent de voyage
+Smart Budget
+Base de données touristique camerounaise
+Intelligence documentaire — RAG
+Patrimoine culturel
+Écotourisme
+Recherche « Near Me »
+Carte interactive
+Architecture technique
+Technologies proposées
+Sources de données
+Sécurité et fiabilité
+Version MVP du concours
+Fonctionnalités volontairement exclues du MVP
+Modèle économique
+Évolutions futures
+Indicateurs de réussite
+Démonstration prévue devant le jury
+Positionnement final
+Correspondance avec l'Article 3 du concours
+Résumé du produit1. 
+2. 
+3. 
+4. 
+5. 
+6. 
+7. 
+8. 
+9. 
+10. 
+11. 
+12. 
+13. 
+14. 
+15. 
+16. 
+17. 
+18. 
+19. 
+20. 
+21. 
+22. 
+23. 
+24. 
+25. 
+26. 
+27. 
+28. 
+29. 
+Cameroon AI Tourism — Cahier des charges — Page 2 / 17
+===== PAGE 3 =====
+
+1.Présentation du projet
+Cameroon AI Tourism  est une plateforme intelligente dédiée à la destination Cameroun.
+Elle utilise l'intelligence artificielle pour accompagner les visiteurs avant et pendant leur séjour, leur
+permettre de découvrir les destinations touristiques camerounaises, personnaliser leurs itinéraires
+selon  leurs  besoins,  valoriser  le  patrimoine  culturel  et  naturel  et  faciliter  l'accès  à  l'information
+touristique.
+La plateforme sera accessible par texte et par la voix, en français et en anglais, avec une ouverture
+progressive vers certaines langues camerounaises.
+L'objectif est de créer un véritable assistant touristique intelligent camerounais, capable de comprendre
+les besoins du visiteur et de lui proposer des expériences adaptées à son budget, sa durée de séjour,
+sa localisation et ses centres d'intérêt.
+2.Problématique
+Les visiteurs qui souhaitent découvrir le Cameroun rencontrent plusieurs difficultés :
+informations touristiques dispersées ;
+manque d'informations personnalisées ;
+difficulté à construire un itinéraire adapté au budget ;
+faible visibilité de certains sites culturels et naturels ;
+informations parfois difficiles d'accès pour les visiteurs étrangers ;
+faible valorisation numérique des cultures et langues camerounaises ;
+difficulté à trouver rapidement des restaurants, hôtels et activités à proximité ;
+manque d'outils intelligents permettant de découvrir le Cameroun de manière responsable.
+Cameroon AI Tourism vise à répondre à ces problèmes avec une plateforme unique et intelligente.
+3.Objectif général
+Développer  une  plateforme  d'intelligence  touristique  basée  sur  l'IA  permettant  aux  visiteurs  de
+découvrir,  comprendre  et  expérimenter  le  Cameroun  de  manière  personnalisée,  accessible  et
+responsable.
+4.Objectifs spécifiques
+La plateforme devra permettre de :
+Fournir un assistant touristique intelligent.
+Permettre une interaction avec l'IA par texte et par voix.• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+1. 
+2. 
+Cameroon AI Tourism — Cahier des charges — Page 3 / 17
+===== PAGE 4 =====
+
+Répondre en français et en anglais.
+Intégrer progressivement certaines langues camerounaises.
+Générer automatiquement des itinéraires personnalisés.
+Adapter les itinéraires au budget du visiteur.
+Valoriser le patrimoine culturel camerounais.
+Promouvoir l'écotourisme et les activités responsables.
+Permettre la découverte des quatre grandes zones culturelles : Grassfields, Sawa, Fang-Beti,
+Sudano-Sahelian.
+Permettre la recherche de lieux touristiques à proximité.
+Recommander des restaurants, hôtels et activités.
+Fournir une carte interactive des destinations.
+Permettre au visiteur d'apprendre progressivement des mots et expressions de langues
+camerounaises.
+Centraliser des données touristiques fiables et structurées.
+5.Utilisateurs
+5.1 Visiteur
+Le visiteur peut :
+consulter les destinations ;
+poser des questions à l'IA ;
+parler avec l'assistant vocal ;
+rechercher des sites touristiques ;
+générer un itinéraire ;
+définir son budget ;
+rechercher des restaurants et hôtels à proximité ;
+découvrir les cultures camerounaises ;
+découvrir les activités écotouristiques ;
+apprendre des expressions locales ;
+consulter une carte interactive.
+Aucun compte obligatoire ne sera nécessaire pour les fonctionnalités principales du prototype.
+5.2 Administrateur
+L'administrateur pourra :
+gérer les destinations ;
+ajouter/modifier/supprimer des informations touristiques ;
+gérer les catégories ;
+gérer les informations culturelles ;
+gérer les informations écotouristiques ;3. 
+4. 
+5. 
+6. 
+7. 
+8. 
+9. 
+10. 
+11. 
+12. 
+13. 
+14. 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+Cameroon AI Tourism — Cahier des charges — Page 4 / 17
+===== PAGE 5 =====
+
+contrôler les sources ;
+vérifier les données ;
+gérer les langues et expressions locales ;
+consulter les statistiques de la plateforme.
+Cette partie pourra être limitée dans le premier prototype.
+6.Fonctionnalités principales — F1 : Assistant touristique IA
+L'utilisateur peut poser une question à l'IA.
+« Que puis-je visiter à Yaoundé ? »
+« Je dispose de 100 000 FCFA pour trois jours. »
+« Quels sont les meilleurs sites naturels près de Kribi ? »
+« Je veux découvrir la culture Sawa. » 
+L'IA  analyse  la  demande  et  utilise  la  base  de  données  touristique  pour  fournir  une  réponse
+contextualisée.
+7.Assistant vocal
+L'utilisateur pourra parler directement à l'application.
+Fonctionnement
+Voix → Speech-to-Text → IA → Text-to-Speech → Voix
+🎙️ 
+« Je suis à Yaoundé et je cherche un restaurant camerounais près de moi. »
+L'application :
+transforme la voix en texte ;
+comprend la demande ;
+recherche les informations pertinentes ;
+génère une réponse ;
+lit la réponse à voix haute.
+Technologie envisagée
+Speech-to-Text : modèle vocal Hugging Face, par exemple Whisper ;
+LLM : modèle conversationnel ;
+Text-to-Speech : modèle TTS Hugging Face ou service adapté.• 
+• 
+• 
+• 
+1. 
+2. 
+3. 
+4. 
+5. 
+• 
+• 
+• 
+Cameroon AI Tourism — Cahier des charges — Page 5 / 17
+===== PAGE 6 =====
+
+8.Multilingue
+La plateforme supportera prioritairement : Français, English.
+Une extension expérimentale sera prévue pour certaines langues camerounaises selon la disponibilité
+et la qualité des modèles IA.
+Fonction supplémentaire : Learn Cameroon
+Le visiteur pourra apprendre progressivement des expressions locales.
+Langue : Ewondo
+Bonjour · Merci · Bienvenue · Au revoir · Comment allez-vous ? · Où se trouve… ? · Combien ça
+coûte ? 
+Chaque expression pourra contenir : traduction, prononciation, audio, contexte culturel.
+L'objectif n'est pas de remplacer un cours de langue mais de permettre au visiteur d'acquérir quelques
+expressions utiles et culturelles.
+9.Générateur intelligent de voyage
+L'utilisateur  fournit  :  destination,  durée,  budget,  nombre  de  personnes,  type  de  voyage,  centres
+d'intérêt.
+« Je suis une famille de quatre personnes à Yaoundé pendant trois jours avec un budget de 150
+000 FCFA. Nous aimons la culture et la nature. »
+L'IA génère un programme personnalisé.
+Résultat
+Jour Contenu généré
+Jour 1 activités, horaires indicatifs, transport, repas, coût estimatif
+Jour 2 activités, transport, repas, coût estimatif
+Jour 3 activités, coût estimatif
+La plateforme calcule également le budget global estimatif.
+10.Smart Budget
+L'utilisateur peut modifier son budget.
+Cameroon AI Tourism — Cahier des charges — Page 6 / 17
+===== PAGE 7 =====
+
+Budget initial : 150 000 FCFA
+Puis : « Je n'ai finalement que 100 000 FCFA. »
+L'IA recalcule l'itinéraire et propose des alternatives moins coûteuses.
+Le système doit privilégier les données vérifiées et indiquer lorsqu'un prix est une estimation.
+11.Base de données touristique camerounaise
+La plateforme disposera d'une base structurée contenant les informations touristiques.
+Informations principales
+nom · région · ville · département · zone culturelle · catégorie
+description française · description anglaise
+coordonnées GPS · activités · coût estimatif · durée recommandée · meilleure période
+informations culturelles · informations écotouristiques · activités communautaires · guide local
+images · source · date de vérification
+Catégories
+patrimoine culturel · musée · monument · parc · réserve · plage · cascade · montagne
+artisanat · gastronomie · festival · activité · hébergement · restauration
+12.Intelligence documentaire — RAG
+L'IA ne devra pas répondre uniquement à partir de ses connaissances générales. Elle utilisera un
+système RAG (Retrieval-Augmented Generation).
+Fonctionnement
+Question du visiteur
+        ↓
+Analyse de la question
+        ↓
+Recherche dans la base touristique
+        ↓
+Récupération des informations pertinentes
+        ↓
+IA
+        ↓
+Réponse personnalisée
+Cela permettra de réduire les hallucinations et de mieux contrôler les informations concernant le
+Cameroun.• 
+• 
+• 
+• 
+• 
+• 
+• 
+Cameroon AI Tourism — Cahier des charges — Page 7 / 17
+===== PAGE 8 =====
+
+13.Patrimoine culturel
+Une section dédiée permettra de découvrir les cultures camerounaises.
+Grassfields
+chefferies
+artisanat
+traditions
+patrimoine
+gastronomie
+événementsSawa
+patrimoine du Littoral
+traditions
+gastronomie
+artisanat
+événements culturels
+Fang-Beti
+traditions
+artisanat
+patrimoine
+gastronomie
+expressions culturellesSudano-Sahelian
+architecture
+artisanat
+traditions
+patrimoine
+gastronomie
+sites historiques
+L'IA pourra générer des parcours culturels selon la zone choisie.
+14.Écotourisme
+La  plateforme  intégrera  une  dimension  de  tourisme  responsable.  Les  destinations  pourront  être
+caractérisées  par  :  Eco-tourism,  Community-based  tourism,  Sustainable  activity,  Local  guide,
+Conservation, Cultural preservation.
+L'IA pourra proposer prioritairement des expériences responsables lorsque le visiteur sélectionne le
+mode : 🌿 Responsible Travel
+15.Recherche « Near Me »
+L'utilisateur pourra rechercher des établissements ou activités autour de sa position : restaurants,
+hôtels, sites touristiques, activités près de moi.
+Les informations dynamiques pourront être obtenues via une API de lieux telle que Google Places,
+tandis que les informations touristiques de référence resteront dans notre base.
+16.Carte interactive
+Une carte permettra d'afficher : destinations, sites culturels, sites naturels, restaurants, hôtels, activités.• 
+• 
+• 
+• 
+• 
+• • 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• • 
+• 
+• 
+• 
+• 
+• 
+Cameroon AI Tourism — Cahier des charges — Page 8 / 17
+===== PAGE 9 =====
+
+Technologies possibles :  MapLibre, OpenStreetMap.
+Cameroon AI Tourism — Cahier des charges — Page 9 / 17
+===== PAGE 10 =====
+
+17.Architecture technique
+                    VISITEUR
+                 /            \
+              TEXTE           VOIX
+                |               |
+                |          Speech-to-Text
+                |               |
+                └───────┬───────┘
+                        ↓
+                 AI QUERY ANALYSIS
+                        ↓
+             ┌──────────┴──────────┐
+             ↓                     ↓
+     TOURISM DATABASE          LIVE DATA
+             ↓                     ↓
+             └──────────┬──────────┘
+                        ↓
+                      RAG
+                        ↓
+                 AI REASONING
+                        ↓
+              TRIP OPTIMIZATION
+                  /          \
+             ITINERARY      BUDGET
+                  \          /
+                   ↓        ↓
+                  RESPONSE
+                     ↓
+                TEXT + VOICE
+18.Technologies proposées
+Domaine Technologies
+Frontend Next.js, React, TypeScript, Tailwind CSS
+Backend Next.js API Routes / Server Actions, ou FastAPI
+Base de données PostgreSQL, Supabase
+Recherche sémantique pgvector
+Intelligence artificielle LLM, Hugging Face, modèles d'embeddings, RAG
+Voix Whisper / modèle ASR compatible, modèle TTS compatible
+Cartographie MapLibre, OpenStreetMap
+Données dynamiques Google Places API lorsque nécessaire
+Cameroon AI Tourism — Cahier des charges — Page 10 / 17
+===== PAGE 11 =====
+
+19.Sources de données
+Les données devront être collectées et vérifiées à partir de sources fiables.
+Sources prioritaires
+MINTOUL ;
+données ouvertes ;
+Wikimedia Commons pour les images sous licence compatible ;
+Wikidata/Wikipedia pour certaines informations générales ;
+sites officiels des établissements ;
+partenaires touristiques ;
+vérification manuelle.
+Pour les images, la plateforme devra conserver : source, auteur lorsque disponible, licence, URL, date
+de récupération.
+Les contenus protégés ne devront pas être copiés massivement sans autorisation.
+20.Sécurité et fiabilité
+Le système devra :
+protéger les clés API ;
+ne jamais exposer les clés dans le frontend ;
+valider les entrées utilisateur ;
+limiter les requêtes abusives ;
+indiquer les informations estimatives ;
+afficher les sources lorsque pertinent ;
+éviter de présenter une information incertaine comme un fait.
+Pour les langues camerounaises, l'application devra également afficher un niveau de confiance lorsque
+la reconnaissance ou la traduction est expérimentale.• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+Cameroon AI Tourism — Cahier des charges — Page 11 / 17
+===== PAGE 12 =====
+
+21.Version MVP du concours
+Compte tenu du délai de développement, les fonctionnalités prioritaires sont :
+PRIORITÉ 1 — obligatoire
+Interface web
+Assistant IA
+Chat texte
+Speech-to-Text
+Text-to-Speech
+Français / English
+Base touristique camerounaise
+RAG
+Génération d'itinéraire
+Budget intelligent
+Carte
+Données réelles camerounaises
+PRIORITÉ 2 — fortement recommandée
+Patrimoine culturel
+Quatre zones culturelles
+Écotourisme
+Recherche Near Me
+Restaurants
+Hôtels
+Activités
+Learn Cameroon
+PRIORITÉ 3 — bonus
+Reconnaissance d'images
+Langues camerounaises vocales expérimentales
+Sauvegarde d'itinéraire
+Partage d'itinéraire
+Dashboard administrateur
+Statistiques touristiques• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+Cameroon AI Tourism — Cahier des charges — Page 12 / 17
+===== PAGE 13 =====
+
+22.Fonctionnalités volontairement exclues du MVP
+Pour respecter le délai, le prototype ne comprendra pas initialement :
+paiement hôtelier complet ;
+réservation hôtelière complexe ;
+marketplace ;
+réseau social ;
+application mobile native ;
+entraînement d'un modèle IA propriétaire ;
+système de réservation complexe ;
+gestion complète des agences touristiques.
+Ces fonctionnalités pourront être ajoutées dans les versions futures.
+23.Modèle économique
+Segment Sources de revenus
+B2C accès gratuit aux fonctions principales ; itinéraires premium ; expériences personnalisées
+B2B hôtels ; restaurants ; agences touristiques ; guides ; opérateurs touristiques
+B2G collectivités ; organismes touristiques ; institutions publiques
+La  plateforme  pourrait  également  proposer  des  statistiques  anonymisées  sur  les  tendances
+touristiques.
+24.Évolutions futures
+À moyen terme :
+davantage de langues camerounaises ;
+assistant vocal plus naturel ;
+reconnaissance des monuments et objets artisanaux ;
+recommandations prédictives ;
+réservation d'activités et d'hôtels ;
+intégration de guides locaux ;
+marketplace touristique ;
+application mobile ;
+système de recommandations basé sur l'historique du visiteur.• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+Cameroon AI Tourism — Cahier des charges — Page 13 / 17
+===== PAGE 14 =====
+
+25.Indicateurs de réussite
+Le prototype sera évalué notamment sur :
+précision des réponses ; qualité des recommandations ; qualité de la voix ; rapidité ;
+qualité des itinéraires ; respect du budget ; richesse des données camerounaises ;
+qualité de l'expérience utilisateur ; couverture culturelle ; intégration de l'écotourisme ;
+fonctionnement en français et anglais ; capacité à fonctionner avec des données réelles.• 
+• 
+• 
+• 
+Cameroon AI Tourism — Cahier des charges — Page 14 / 17
+===== PAGE 15 =====
+
+26.Démonstration prévue devant le jury
+La démonstration commencera avec un visiteur qui parle à l'application.
+🎙️ 
+« Bonjour, je viens au Cameroun pour trois jours. Je suis avec ma famille à Yaoundé. Nous
+avons un budget de 150 000 FCFA et nous aimons la culture et la nature. »
+L'IA :
+comprend la voix ;
+identifie Yaoundé ;
+identifie la durée ;
+identifie le budget ;
+identifie la composition du groupe ;
+identifie les centres d'intérêt ;
+consulte la base touristique ;
+génère un itinéraire ;
+calcule le budget ;
+affiche les lieux sur la carte ;
+répond vocalement.
+Ensuite, le visiteur peut demander :
+« Réduis mon budget à 100 000 FCFA. »
+L'IA recalcule.
+« Je veux maintenant découvrir la culture Sawa. »
+L'IA propose un parcours culturel.
+« Apprends-moi cinq expressions camerounaises utiles pour mon voyage. »
+L'IA lance Learn Cameroon.
+27.Positionnement final
+Cameroon AI Tourism n'est pas simplement :
+❌ un chatbot    ❌ un générateur de voyages    ❌ une carte touristique    ❌ une application de
+réservation
+C'est :1. 
+2. 
+3. 
+4. 
+5. 
+6. 
+7. 
+8. 
+9. 
+10. 
+11. 
+Cameroon AI Tourism — Cahier des charges — Page 15 / 17
+===== PAGE 16 =====
+
+Une plateforme d'intelligence touristique camerounaise qui combine IA conversationnelle,
+assistance vocale, données touristiques, personnalisation des voyages, patrimoine culturel,
+écotourisme et apprentissage culturel pour améliorer l'expérience des visiteurs au
+Cameroun. 
+28.Correspondance avec l'Article 3 du concours
+Exigence du concours Réponse de Cameroon AI Tourism
+Assistance touristique multilingue Assistant IA FR/EN
+Chatbot AI Tourism Assistant
+Assistant vocal Voice AI
+Écotourisme Responsible Travel
+Gestion durable Données et recommandations responsables
+Artisanat Cultural Heritage
+Patrimoine Grassfields Cultural Area
+Patrimoine Sawa Cultural Area
+Patrimoine Sudano-Sahelian Cultural Area
+Patrimoine Fang-Beti Cultural Area
+Expérience hôtelière Hôtels / Near Me
+Application prédictive Smart Itinerary + Budget
+Modernisation de la destination Intelligence touristique nationale
+29.Résumé du produit
+🤖 AI Tourism Assistant
++ 🎙️ Voice Assistant
++ 🗺️ Cameroon Tourism Map
++ 🧳 Smart Trip Planner
++ 💰 Smart Budget
++ 🏛️ Cultural Heritage
+Cameroon AI Tourism — Cahier des charges — Page 16 / 17
+===== PAGE 17 =====
+
++ 🌿 Eco-tourism
++ 📍 Near Me
++ 🗣️ Learn Cameroon
++ 🇨🇲 Cameroon Tourism Knowledge Base 
+Vision
+« Faire de l'intelligence artificielle un véritable guide touristique numérique du Cameroun. »
+Cameroon AI Tourism — Cahier des charges — Page 17 / 17
