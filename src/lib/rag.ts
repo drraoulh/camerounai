@@ -236,9 +236,16 @@ export function parseTripIntent(query: string) {
 
   const wantsTrip =
     Boolean(budgetMatch && (days !== null || city)) ||
-    /itin[eé]raire|trip|voyage|séjour|sejour|programme|planif/i.test(q) ||
+    /\b(itin[eé]raire|trip|voyage|séjour|sejour|programme|planif\w*|plans?)\b/i.test(
+      q,
+    ) ||
     (Boolean(budgetMatch) &&
-      /visiter|discover|découvrir|decouvrir|aimer|like|culture|nature/i.test(q));
+      /visiter|discover|découvrir|decouvrir|aimer|like|culture|nature/i.test(q)) ||
+    (days !== null &&
+      Boolean(city) &&
+      /nature|culture|resto|restaurant|h[oô]tel|plage|beach|famille|family/i.test(
+        q,
+      ));
 
   if (!wantsTrip) return null;
 
