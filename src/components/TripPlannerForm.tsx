@@ -158,14 +158,14 @@ export function TripPlannerForm() {
         .slice(0, 8);
 
   const field =
-    "mt-1 w-full rounded-full border border-[var(--line)] bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/20";
+    "mt-1.5 w-full rounded-full border border-[var(--line)] bg-white/90 px-4 py-2.5 text-sm outline-none transition focus:border-[var(--cm-green)] focus:ring-2 focus:ring-[var(--cm-green)]/15";
   const chip =
-    "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors";
+    "rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all";
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
       <form
-        className="space-y-4 border border-[var(--line)] bg-white p-6"
+        className="surface-panel space-y-5 p-6 sm:p-7"
         onSubmit={(e) => {
           e.preventDefault();
           void generate();
@@ -287,9 +287,13 @@ export function TripPlannerForm() {
         <button
           type="submit"
           disabled={loading || selectedInterests.length === 0}
-          className="w-full rounded-full bg-[var(--ink)] py-3 text-sm font-semibold text-white disabled:opacity-50"
+          className="btn-pill btn-pill--green w-full justify-center disabled:opacity-50"
         >
-          {strings.trip.generate}
+          {loading
+            ? isFr
+              ? "Génération…"
+              : "Generating…"
+            : strings.trip.generate}
         </button>
         {plan && (
           <div className="flex flex-wrap gap-2">
@@ -315,8 +319,8 @@ export function TripPlannerForm() {
 
       <div className="space-y-4">
         {plan ? (
-          <div className="border border-[var(--line)] bg-white p-6">
-            <p className="text-sm text-[var(--muted)]">{plan.summary}</p>
+          <div className="surface-panel p-6 sm:p-7">
+            <p className="text-sm leading-relaxed text-[var(--muted)]">{plan.summary}</p>
             {plan.preferences && (
               <p className="mt-2 text-xs text-[var(--cm-green)]">
                 {isFr ? "Hôtel" : "Hotel"}: {plan.preferences.hotelTier} ·{" "}
@@ -333,8 +337,8 @@ export function TripPlannerForm() {
             <p className="text-sm text-amber-900/80">{plan.budgetNote}</p>
 
             {plan.recommendations && plan.recommendations.length > 0 && (
-              <div className="mt-4 border border-[var(--line)] bg-[var(--accent-soft)]/40 p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--cm-green)]">
+              <div className="mt-4 rounded-[1.1rem] border border-[var(--cm-green)]/15 bg-[var(--accent-soft)]/70 p-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--cm-green-deep)]">
                   {isFr ? "Recommandations" : "Recommendations"}
                 </p>
                 <ul className="mt-2 space-y-1.5 text-sm text-[var(--ink)]">
@@ -345,10 +349,15 @@ export function TripPlannerForm() {
               </div>
             )}
 
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-5 space-y-3">
               {plan.days.map((d) => (
-                <li key={d.day} className="border border-[var(--line)] p-3 text-sm">
-                  <p className="font-medium">{d.title}</p>
+                <li
+                  key={d.day}
+                  className="rounded-[1.05rem] border border-[var(--line)] bg-white/80 p-4 text-sm"
+                >
+                  <p className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--ink)]">
+                    {d.title}
+                  </p>
                   {d.activities.map((a, i) => {
                     const kind =
                       a.kind === "nature"

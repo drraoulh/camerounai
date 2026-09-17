@@ -49,7 +49,11 @@ export default function ThingsToDoPage() {
 
   return (
     <PageShell>
-      <PageHero title={strings.things.title} subtitle={strings.things.subtitle} />
+      <PageHero
+        kicker={isFr ? "Découvrir" : "Discover"}
+        title={strings.things.title}
+        subtitle={strings.things.subtitle}
+      />
       <p className="mb-4 text-xs text-[var(--muted)]">
         {!ready
           ? "…"
@@ -74,14 +78,13 @@ export default function ThingsToDoPage() {
           </button>
         ))}
       </div>
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {list.map((d) => (
-          <article
-            id={d.id}
-            key={d.id}
-            className="relative overflow-hidden rounded-[1.25rem] border border-[var(--line)] bg-white shadow-sm"
-          >
-            <Link href={`/destinations/${d.id}`} className="media-card aspect-[16/10] block">
+          <div key={d.id} id={d.id} className="relative">
+            <Link
+              href={`/destinations/${d.id}`}
+              className="media-card aspect-[4/5] block"
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={d.image}
@@ -89,30 +92,29 @@ export default function ThingsToDoPage() {
                 loading="lazy"
                 referrerPolicy="no-referrer"
               />
+              <div className="media-card__shade" />
+              <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--cm-yellow)]">
+                  {d.city} · {d.culturalZone}
+                </p>
+                <h2 className="mt-1 font-[family-name:var(--font-display)] text-2xl">
+                  {isFr ? d.name : d.nameEn}
+                </h2>
+                <p className="mt-2 line-clamp-2 text-sm text-white/80">
+                  {isFr ? d.descriptionFr : d.descriptionEn}
+                </p>
+                {d.estimatedCostFcfa > 0 && (
+                  <p className="mt-3 text-xs font-medium text-white/75">
+                    ~{d.estimatedCostFcfa.toLocaleString("fr-FR")} FCFA
+                    {d.bestPeriod ? ` · ${d.bestPeriod}` : ""}
+                  </p>
+                )}
+              </div>
             </Link>
             <div className="absolute right-3 top-3 z-10">
               <FavoriteButton id={d.id} light />
             </div>
-            <div className="p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]">
-                {d.city} · {d.category} · {d.culturalZone}
-              </p>
-              <Link href={`/destinations/${d.id}`}>
-                <h2 className="mt-1 font-[family-name:var(--font-display)] text-xl hover:underline">
-                  {isFr ? d.name : d.nameEn}
-                </h2>
-              </Link>
-              <p className="mt-2 line-clamp-3 text-sm text-[var(--muted)]">
-                {isFr ? d.descriptionFr : d.descriptionEn}
-              </p>
-              {d.estimatedCostFcfa > 0 && (
-                <p className="mt-3 text-xs font-medium text-[var(--accent)]">
-                  ~{d.estimatedCostFcfa.toLocaleString("fr-FR")} FCFA
-                  {d.bestPeriod ? ` · ${d.bestPeriod}` : ""}
-                </p>
-              )}
-            </div>
-          </article>
+          </div>
         ))}
       </div>
     </PageShell>
