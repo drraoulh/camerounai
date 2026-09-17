@@ -295,9 +295,13 @@ export function retrieveKnowledge(
 export function isKnowledgeQuestion(query: string): boolean {
   const q = normalize(query);
   return (
-    /\b(histoire|history|indépendan|independen|président|president|biya|gouvernement|government|population|économie|economy|climat|climate|saison|season|visa|passeport|passport|vaccin|paludisme|malaria|monnaie|currency|fcfa|langues?|languages?|étiquette|etiquette|ngondo|festival|régions?|regions?|qu.est.ce|what is|c.est quoi|symbol|devise|motto|hymne|anthem|formalit|santé|health|écotour|ecotour|responsable|responsible|parle[- ]t[- ]on|spoken)\b/.test(
+    /\b(histoire|history|indépendan|independen|président|president|biya|gouvernement|government|population|économie|economy|climat|climate|saison|season|visa|passeport|passport|vaccin|paludisme|malaria|monnaie|currency|langues?|languages?|étiquette|etiquette|ngondo|festival|régions?|regions?|qu.est.ce|what is|c.est quoi|symbol|devise|motto|hymne|anthem|formalit|santé|health|écotour|ecotour|responsable|responsible|parle[- ]t[- ]on|spoken)\b/.test(
       q,
     ) ||
+    // Currency alone is not a knowledge question (often part of a trip budget)
+    (/\b(fcfa|cfa)\b/.test(q) &&
+      !/\b(jours?|days?|itin[eé]raire|budget|voyage|trip|séjour|sejour)\b/.test(q) &&
+      /\b(monnaie|currency|argent|money|change)\b/.test(q)) ||
     (/\b(culture|culturel|cultural|aire culturelle|sawa|grassfields?|fang[- ]?beti|sudano)\b/.test(
       q,
     ) &&

@@ -14,16 +14,16 @@ const JURY_DEMO_EN =
   "Hello, I am coming to Cameroon for three days. I am with my family in Yaoundé. We have a budget of 150,000 FCFA and we like culture and nature.";
 
 const PROMPTS_FR = [
-  "Que visiter à Kribi ?",
+  "Plan 3 jours à Yaoundé : nature, restos et hôtel",
   "Histoire et régions du Cameroun",
   "Formalités d’entrée et santé",
-  "Apprends-moi 5 expressions utiles",
+  "Que visiter à Kribi ?",
 ];
 const PROMPTS_EN = [
-  "What to visit in Kribi?",
+  "3-day Yaoundé plan: nature, restaurants and hotel",
   "Cameroon history and regions",
   "Entry formalities and health",
-  "Teach me 5 useful phrases",
+  "What to visit in Kribi?",
 ];
 
 function speak(text: string, locale: string) {

@@ -244,11 +244,23 @@ export function parseTripIntent(query: string) {
 
   const interests: string[] = [];
   if (/culture|patrimoine|heritage|mus[eé]e/i.test(q)) interests.push("culture");
-  if (/nature|parc|for[eê]t|forest|eco/i.test(q)) interests.push("nature");
+  if (/nature|parc|for[eê]t|forest|eco|montagne|cascade|plage|beach/i.test(q))
+    interests.push("nature");
   if (/plage|beach|\bocean\b|\bla mer\b|\ben mer\b/i.test(q)) interests.push("plage");
+  if (/gastro|cuisine|food|manger|eat|restaurant|ndol/i.test(q))
+    interests.push("food", "restaurant");
+  if (/h[oô]tel|h[eé]berg|sleep|nuit|lodging|stay|dormir/i.test(q))
+    interests.push("hotel");
   if (/sawa/i.test(q)) interests.push("sawa", "culture");
   if (/famille|family/i.test(q)) interests.push("famille");
-  if (interests.length === 0) interests.push("culture", "nature");
+  // Balanced default plan: culture + nature + food (restaurants) + stay
+  if (interests.length === 0) interests.push("culture", "nature", "food");
+  else {
+    if (!interests.includes("food") && !interests.includes("restaurant"))
+      interests.push("food");
+    if (!interests.some((i) => /nature|plage|culture/.test(i)))
+      interests.push("culture", "nature");
+  }
 
   const destination =
     city === "yaounde" || city === "yaoundé"
@@ -270,10 +282,33 @@ export function parseTripIntent(query: string) {
 
 function formatTripAnswer(plan: TripPlan, locale: Locale): string {
   const isFr = locale === "fr";
+  const kindLabel = (kind?: string) => {
+    if (!kind) return "";
+    const map: Record<string, [string, string]> = {
+      nature: ["Nature", "Nature"],
+      culture: ["Culture", "Culture"],
+      visit: ["Visite", "Visit"],
+      restaurant: ["Restaurant", "Restaurant"],
+      hotel: ["Hébergement", "Stay"],
+      transport: ["Transport", "Transport"],
+    };
+    const pair = map[kind];
+    if (!pair) return "";
+    return isFr ? pair[0] : pair[1];
+  };
+
   const days = plan.days
     .map((d) => {
       const acts = d.activities
-        .map((a) => `  • ${a.time} — ${a.name}`)
+        .map((a) => {
+          const tag = kindLabel(a.kind);
+          const prefix = tag ? `[${tag}] ` : "";
+          const cost =
+            a.costFcfa > 0
+              ? ` · ~${formatCost(a.costFcfa, locale)}`
+              : "";
+          return `  • ${a.time} — ${prefix}${a.name}${cost}`;
+        })
         .join("\n");
       return `${d.title} (~${formatCost(d.estimatedCostFcfa, locale)})\n${acts}`;
     })
@@ -288,7 +323,7 @@ function formatTripAnswer(plan: TripPlan, locale: Locale): string {
       `Budget estimé : ${formatCost(plan.totalEstimatedFcfa, locale)}.`,
       plan.budgetNote,
       "",
-      "Astuce : ouvrez « Planifier » pour voir ces lieux sur la carte. Les montants sont indicatifs (entrée / activités, hors transport long trajet).",
+      "Chaque jour mêle visite (nature / culture), restaurant et, si besoin, une nuit d’hôtel. Ouvrez « Planifier » pour la carte. Montants indicatifs.",
     ].join("\n");
   }
 
@@ -300,7 +335,7 @@ function formatTripAnswer(plan: TripPlan, locale: Locale): string {
     `Estimated budget: ${formatCost(plan.totalEstimatedFcfa, locale)}.`,
     plan.budgetNote,
     "",
-    "Tip: open Plan your trip to see these places on the map. Amounts are indicative (entries/activities; long-distance transport not included).",
+    "Each day mixes a visit (nature / culture), restaurants and lodging when needed. Open Plan your trip for the map. Amounts are indicative.",
   ].join("\n");
 }
 
@@ -347,6 +382,19 @@ export function buildRagAnswer(
     };
   }
 
+  // Trip plans first (budget + days) — before country-knowledge routing
+  const tripIntent = parseTripIntent(query);
+  if (tripIntent) {
+    const plan = generateTripPlan({ ...tripIntent, locale }, catalog);
+    return {
+      answer: formatTripAnswer(plan, locale),
+      sourceIds: plan.placeIds,
+      tripPlan: plan,
+      knowledgeHits: kbHits,
+      mode: "trip",
+    };
+  }
+
   // Country / practical / culture knowledge before place dumps
   if (isKnowledgeQuestion(query) && kbHits.length > 0) {
     return {
@@ -375,18 +423,6 @@ export function buildRagAnswer(
       sourceIds: [],
       knowledgeHits: kbHits,
       mode: "learn",
-    };
-  }
-
-  const tripIntent = parseTripIntent(query);
-  if (tripIntent) {
-    const plan = generateTripPlan({ ...tripIntent, locale }, catalog);
-    return {
-      answer: formatTripAnswer(plan, locale),
-      sourceIds: plan.placeIds,
-      tripPlan: plan,
-      knowledgeHits: kbHits,
-      mode: "trip",
     };
   }
 

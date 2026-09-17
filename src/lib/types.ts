@@ -79,16 +79,26 @@ export interface TripRequest {
   locale?: Locale;
 }
 
+export type TripActivityKind =
+  | "nature"
+  | "culture"
+  | "visit"
+  | "restaurant"
+  | "hotel"
+  | "transport";
+
 export interface DayPlan {
   day: number;
   title: string;
   activities: {
     name: string;
     time: string;
+    kind?: TripActivityKind;
     transport?: string;
     meal?: string;
     costFcfa: number;
     notes?: string;
+    placeId?: string;
   }[];
   estimatedCostFcfa: number;
 }
@@ -100,4 +110,7 @@ export interface TripPlan {
   withinBudget: boolean;
   budgetNote: string;
   placeIds: string[];
+  /** Named hotels / restaurants referenced in the plan (for UI / chat). */
+  stayIds?: string[];
+  eatIds?: string[];
 }

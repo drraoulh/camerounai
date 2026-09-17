@@ -14,7 +14,7 @@ export function TripPlannerForm() {
   const [days, setDays] = useState(3);
   const [budgetFcfa, setBudgetFcfa] = useState(150000);
   const [people, setPeople] = useState(4);
-  const [interests, setInterests] = useState("culture, nature");
+  const [interests, setInterests] = useState("culture, nature, food");
   const [plan, setPlan] = useState<TripPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [shareNote, setShareNote] = useState<string | null>(null);
@@ -217,13 +217,47 @@ export function TripPlannerForm() {
               {plan.days.map((d) => (
                 <li key={d.day} className="border border-[var(--line)] p-3 text-sm">
                   <p className="font-medium">{d.title}</p>
-                  {d.activities.map((a, i) => (
-                    <p key={i} className="mt-1 text-[var(--muted)]">
-                      {a.time} : {a.name} (~{a.costFcfa.toLocaleString("fr-FR")} FCFA)
-                    </p>
-                  ))}
-                  <p className="mt-1 text-xs text-[var(--accent)]">
-                    Jour: {d.estimatedCostFcfa.toLocaleString("fr-FR")} FCFA
+                  {d.activities.map((a, i) => {
+                    const kind =
+                      a.kind === "nature"
+                        ? locale === "fr"
+                          ? "Nature"
+                          : "Nature"
+                        : a.kind === "culture"
+                          ? "Culture"
+                          : a.kind === "restaurant"
+                            ? "Restaurant"
+                            : a.kind === "hotel"
+                              ? locale === "fr"
+                                ? "Hôtel"
+                                : "Stay"
+                              : a.kind === "visit"
+                                ? locale === "fr"
+                                  ? "Visite"
+                                  : "Visit"
+                                : null;
+                    return (
+                      <p key={i} className="mt-1.5 text-[var(--muted)]">
+                        <span className="font-medium text-[var(--ink)]">
+                          {a.time}
+                        </span>
+                        {kind ? (
+                          <span className="mx-1 text-[var(--cm-green)]">
+                            · {kind}
+                          </span>
+                        ) : null}
+                        : {a.name} (~{a.costFcfa.toLocaleString("fr-FR")} FCFA)
+                        {a.notes ? (
+                          <span className="mt-0.5 block text-xs leading-snug opacity-80">
+                            {a.notes}
+                          </span>
+                        ) : null}
+                      </p>
+                    );
+                  })}
+                  <p className="mt-2 text-xs text-[var(--accent)]">
+                    {locale === "fr" ? "Jour" : "Day"}:{" "}
+                    {d.estimatedCostFcfa.toLocaleString("fr-FR")} FCFA
                   </p>
                 </li>
               ))}
