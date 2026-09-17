@@ -58,13 +58,14 @@ export default function EatPage() {
 
   return (
     <PageShell>
-      <PageHero title={strings.eat.title} subtitle={strings.eat.subtitle} />
+      <PageHero
+        kicker={isFr ? "Gastronomie" : "Food"}
+        title={strings.eat.title}
+        subtitle={strings.eat.subtitle}
+      />
       <div className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {highlights.map((h) => (
-          <div
-            key={h.t}
-            className="rounded-[1.15rem] border border-[var(--line)] bg-white p-5 shadow-sm"
-          >
+          <div key={h.t} className="surface-panel p-5">
             <h2 className="font-[family-name:var(--font-display)] text-xl">
               {h.t}
             </h2>
@@ -141,7 +142,7 @@ export default function EatPage() {
         </Link>
         <Link
           href="/stay"
-          className="rounded-full border border-[var(--line)] bg-white px-5 py-2.5 text-sm font-semibold text-[var(--ink)] hover:border-[var(--cm-green)] hover:text-[var(--cm-green)]"
+          className="btn-pill border border-[var(--line)] bg-white text-[var(--ink)]"
         >
           {strings.nav.stay}
         </Link>

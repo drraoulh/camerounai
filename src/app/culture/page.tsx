@@ -15,6 +15,7 @@ export default function CulturePage() {
   return (
     <PageShell>
       <PageHero
+        kicker={isFr ? "Patrimoine vivant" : "Living heritage"}
         title={strings.culture.title}
         subtitle={
           isFr
@@ -38,7 +39,7 @@ export default function CulturePage() {
             <article
               key={area.id}
               id={area.slug}
-              className="scroll-mt-28 overflow-hidden rounded-[1.75rem] border border-[var(--line)] bg-white shadow-sm lg:grid lg:grid-cols-2"
+              className="surface-panel scroll-mt-28 overflow-hidden lg:grid lg:grid-cols-2"
             >
               {/* Image apart */}
               <div className="relative min-h-[280px] lg:min-h-full">

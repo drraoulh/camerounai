@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Sans, Fraunces } from "next/font/google";
+import { Cormorant_Garamond, Outfit } from "next/font/google";
 import "./globals.css";
 import { LocaleProvider } from "@/components/LocaleProvider";
 import { FavoritesProvider } from "@/components/FavoritesProvider";
@@ -8,14 +8,15 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { FloatingChatbot } from "@/components/FloatingChatbot";
 
-const dmSans = DM_Sans({
+const outfit = Outfit({
   variable: "--font-body",
   subsets: ["latin"],
 });
 
-const fraunces = Fraunces({
+const cormorant = Cormorant_Garamond({
   variable: "--font-display",
   subsets: ["latin"],
+  weight: ["500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -29,9 +30,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="fr"
       data-scroll-behavior="smooth"
-      className={`${dmSans.variable} ${fraunces.variable} h-full`}
+      className={`${outfit.variable} ${cormorant.variable} h-full`}
     >
-      <body className="min-h-full flex flex-col bg-[var(--bg)] font-sans text-[var(--ink)] antialiased">
+      <body className="site-body min-h-full flex flex-col font-sans text-[var(--ink)] antialiased">
         <LocaleProvider>
           <FavoritesProvider>
             <PlacesProvider>

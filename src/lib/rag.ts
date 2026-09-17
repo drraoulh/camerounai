@@ -4,6 +4,14 @@ import { expressions } from "@/data/expressions";
 import { generateTripPlan } from "./trip-planner";
 import { decodeHtmlEntities } from "./text";
 import { getLocalizedDestination } from "./localize-place";
+import {
+  formatKnowledgeAnswer,
+  formatKnowledgeFacts,
+  isKnowledgeQuestion,
+  retrieveKnowledge,
+  type KbHit,
+} from "./knowledge-base";
+import { contentTokens } from "./chat-intent";
 import type { Destination, Locale, TripPlan } from "./types";
 
 function shortDesc(text: string, max = 140) {
@@ -19,12 +27,7 @@ function formatCost(n: number, locale: Locale) {
 }
 
 function tokenize(text: string) {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .split(/[^\p{L}\p{N}]+/u)
-    .filter((w) => w.length > 2);
+  return contentTokens(text);
 }
 
 function scoreDestination(dest: Destination, tokens: string[]) {
@@ -206,7 +209,10 @@ function parsePeople(q: string): number {
   if (/famille|family|enfants|kids/.test(q)) return 4;
   const m = q.match(/(\d+)\s*(personnes?|people|pers)\b/i);
   if (m) return Number(m[1]);
+  if (/solo|seul(e)?\b|alone/.test(q)) return 1;
   if (/couple|\bdeux\b/.test(q)) return 2;
+  if (/amis|friends/.test(q)) return 4;
+  if (/groupe|group/.test(q)) return 6;
   return 2;
 }
 
@@ -233,19 +239,49 @@ export function parseTripIntent(query: string) {
 
   const wantsTrip =
     Boolean(budgetMatch && (days !== null || city)) ||
-    /itin[eé]raire|trip|voyage|séjour|sejour|programme|planif/i.test(q) ||
+    /\b(itin[eé]raire|trip|voyage|séjour|sejour|programme|planif\w*|plans?)\b/i.test(
+      q,
+    ) ||
     (Boolean(budgetMatch) &&
-      /visiter|discover|découvrir|decouvrir|aimer|like|culture|nature/i.test(q));
+      /visiter|discover|découvrir|decouvrir|aimer|like|culture|nature/i.test(q)) ||
+    (days !== null &&
+      Boolean(city) &&
+      /nature|culture|resto|restaurant|h[oô]tel|plage|beach|famille|family/i.test(
+        q,
+      ));
 
   if (!wantsTrip) return null;
 
   const interests: string[] = [];
   if (/culture|patrimoine|heritage|mus[eé]e/i.test(q)) interests.push("culture");
-  if (/nature|parc|for[eê]t|forest|eco/i.test(q)) interests.push("nature");
+  if (/nature|parc|for[eê]t|forest|eco|montagne|cascade/i.test(q))
+    interests.push("nature");
   if (/plage|beach|\bocean\b|\bla mer\b|\ben mer\b/i.test(q)) interests.push("plage");
+  if (/gastro|cuisine|food|manger|eat|restaurant|ndol|resto/i.test(q))
+    interests.push("food", "restaurant");
+  if (/h[oô]tel|h[eé]berg|sleep|nuit|lodging|stay|dormir/i.test(q))
+    interests.push("hotel");
   if (/sawa/i.test(q)) interests.push("sawa", "culture");
-  if (/famille|family/i.test(q)) interests.push("famille");
-  if (interests.length === 0) interests.push("culture", "nature");
+  if (/famille|family|enfant|kids/i.test(q)) interests.push("famille");
+  if (/eco|respons|durable/i.test(q)) interests.push("eco");
+
+  // Keep traveler choices — only add food default for lodging/meals coverage
+  if (interests.length === 0) interests.push("culture", "nature", "food");
+  else if (!interests.includes("food") && !interests.includes("restaurant"))
+    interests.push("food");
+
+  let travelType: string | undefined;
+  if (/famille|family|enfant|kids/i.test(q)) travelType = "family";
+  else if (/couple|romantique/i.test(q)) travelType = "couple";
+  else if (/solo|seul(e)?\b|alone/i.test(q)) travelType = "solo";
+  else if (/amis|friends/i.test(q)) travelType = "friends";
+  else if (/groupe|group/i.test(q)) travelType = "group";
+
+  let hotelTier: string | undefined;
+  if (/econom|pas cher|cheap|backpack/i.test(q)) hotelTier = "economy";
+  else if (/luxe|premium|5\s*\*|haut de gamme/i.test(q)) hotelTier = "premium";
+  else if (/confort|comfort|4\s*\*/i.test(q)) hotelTier = "comfort";
+  else if (/standard|milieu/i.test(q)) hotelTier = "standard";
 
   const destination =
     city === "yaounde" || city === "yaoundé"
@@ -262,58 +298,119 @@ export function parseTripIntent(query: string) {
       : 150000,
     people: parsePeople(q),
     interests,
+    travelType,
+    hotelTier,
   };
 }
 
 function formatTripAnswer(plan: TripPlan, locale: Locale): string {
   const isFr = locale === "fr";
+  const kindLabel = (kind?: string) => {
+    if (!kind) return "";
+    const map: Record<string, [string, string]> = {
+      nature: ["Nature", "Nature"],
+      culture: ["Culture", "Culture"],
+      visit: ["Visite", "Visit"],
+      restaurant: ["Restaurant", "Restaurant"],
+      hotel: ["Hébergement", "Stay"],
+      transport: ["Transport", "Transport"],
+    };
+    const pair = map[kind];
+    if (!pair) return "";
+    return isFr ? pair[0] : pair[1];
+  };
+
+  const pref = plan.preferences;
+  const prefsLine = pref
+    ? isFr
+      ? `Préférences : groupe « ${pref.partyStyle} » · hôtel ${pref.hotelTier} (~${pref.nightlyHotelBudgetFcfa.toLocaleString("fr-FR")} FCFA/chambre/nuit, ${pref.roomsNeeded} ch.) · intérêts ${pref.interests.join(", ")}.`
+      : `Preferences: « ${pref.partyStyle} » party · ${pref.hotelTier} hotels (~${pref.nightlyHotelBudgetFcfa.toLocaleString("en-US")} FCFA/room/night, ${pref.roomsNeeded} room(s)) · interests ${pref.interests.join(", ")}.`
+    : "";
+
   const days = plan.days
     .map((d) => {
       const acts = d.activities
-        .map((a) => `  • ${a.time} — ${a.name}`)
+        .map((a) => {
+          const tag = kindLabel(a.kind);
+          const prefix = tag ? `[${tag}] ` : "";
+          const cost =
+            a.costFcfa > 0
+              ? ` · ~${formatCost(a.costFcfa, locale)}`
+              : "";
+          return `  • ${a.time} — ${prefix}${a.name}${cost}`;
+        })
         .join("\n");
       return `${d.title} (~${formatCost(d.estimatedCostFcfa, locale)})\n${acts}`;
     })
     .join("\n\n");
 
+  const reco =
+    plan.recommendations && plan.recommendations.length
+      ? [
+          "",
+          isFr ? "Recommandations :" : "Recommendations:",
+          ...plan.recommendations.map((r) => `• ${r}`),
+        ].join("\n")
+      : "";
+
   if (isFr) {
     return [
       plan.summary,
+      prefsLine,
       "",
       days,
       "",
       `Budget estimé : ${formatCost(plan.totalEstimatedFcfa, locale)}.`,
       plan.budgetNote,
+      reco,
       "",
-      "Astuce : ouvrez « Planifier » pour voir ces lieux sur la carte. Les montants sont indicatifs (entrée / activités, hors transport long trajet).",
-    ].join("\n");
+      "Dites-moi si vous préférez plus de nature, un hôtel plus simple, ou un rythme famille — je réajuste.",
+    ]
+      .filter(Boolean)
+      .join("\n");
   }
 
   return [
     plan.summary,
+    prefsLine,
     "",
     days,
     "",
     `Estimated budget: ${formatCost(plan.totalEstimatedFcfa, locale)}.`,
     plan.budgetNote,
+    reco,
     "",
-    "Tip: open Plan your trip to see these places on the map. Amounts are indicative (entries/activities; long-distance transport not included).",
-  ].join("\n");
+    "Tell me if you want more nature, a simpler hotel, or a family pace — I’ll adjust.",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 export function buildRagAnswer(
   query: string,
   locale: Locale,
   catalog: Destination[] = localDestinations,
-): { answer: string; sourceIds: string[]; tripPlan?: TripPlan } {
+): {
+  answer: string;
+  sourceIds: string[];
+  tripPlan?: TripPlan;
+  knowledgeHits?: KbHit[];
+  mode?: "greeting" | "learn" | "trip" | "knowledge" | "places" | "fallback";
+} {
   const { destinations: ctx, culture, learn, expressions: exprs } = retrieveContext(
     query,
     6,
     catalog,
   );
   const isFr = locale === "fr";
+  const kbHits = retrieveKnowledge(query, locale, 5);
 
-  if (learn && exprs.length > 0) {
+  const wantsPhrases =
+    learn &&
+    exprs.length > 0 &&
+    /(expression|phrase|apprend|learn|salutations?|greetings?)/i.test(query);
+
+  if (wantsPhrases) {
     const lines = exprs.map((e) => {
       const meaning = isFr ? e.translationFr : e.translationEn;
       const tip = isFr ? e.contextFr : e.contextEn;
@@ -327,16 +424,64 @@ export function buildRagAnswer(
         ? `Avec plaisir. Voici quelques expressions utiles sur place :\n\n${lines.join("\n\n")}\n\nElles sont là pour vous aider à échanger ; les usages locaux peuvent un peu varier.`
         : `Happy to help. Here are a few useful phrases on the ground:\n\n${lines.join("\n\n")}\n\nThese are practical guides; local usage can vary slightly.`,
       sourceIds: [],
+      knowledgeHits: kbHits,
+      mode: "learn",
     };
   }
 
+  // Trip plans first (budget + days) — before country-knowledge routing
   const tripIntent = parseTripIntent(query);
   if (tripIntent) {
-    const plan = generateTripPlan({ ...tripIntent, locale }, catalog);
+    const plan = generateTripPlan(
+      {
+        destination: tripIntent.destination,
+        days: tripIntent.days,
+        budgetFcfa: tripIntent.budgetFcfa,
+        people: tripIntent.people,
+        interests: tripIntent.interests,
+        travelType: tripIntent.travelType,
+        hotelTier: tripIntent.hotelTier,
+        locale,
+      },
+      catalog,
+    );
     return {
       answer: formatTripAnswer(plan, locale),
       sourceIds: plan.placeIds,
       tripPlan: plan,
+      knowledgeHits: kbHits,
+      mode: "trip",
+    };
+  }
+
+  // Country / practical / culture knowledge before place dumps
+  if (isKnowledgeQuestion(query) && kbHits.length > 0) {
+    return {
+      answer: formatKnowledgeAnswer(kbHits, locale),
+      sourceIds: [],
+      knowledgeHits: kbHits,
+      mode: "knowledge",
+    };
+  }
+
+  // Named language + learn intent without explicit "phrase" still offers expressions
+  // (skip when the visitor asks a general knowledge question about languages)
+  if (learn && exprs.length > 0 && !isKnowledgeQuestion(query)) {
+    const lines = exprs.map((e) => {
+      const meaning = isFr ? e.translationFr : e.translationEn;
+      const tip = isFr ? e.contextFr : e.contextEn;
+      if (isFr) {
+        return `• ${e.phrase} (${e.language}) — ${meaning}\n  Prononciation : ${e.pronunciation}${tip ? `\n  Quand l’utiliser : ${tip}` : ""}`;
+      }
+      return `• ${e.phrase} (${e.language}) — ${meaning}\n  Pronunciation: ${e.pronunciation}${tip ? `\n  When to use: ${tip}` : ""}`;
+    });
+    return {
+      answer: isFr
+        ? `Avec plaisir. Voici quelques expressions utiles sur place :\n\n${lines.join("\n\n")}\n\nElles sont là pour vous aider à échanger ; les usages locaux peuvent un peu varier.`
+        : `Happy to help. Here are a few useful phrases on the ground:\n\n${lines.join("\n\n")}\n\nThese are practical guides; local usage can vary slightly.`,
+      sourceIds: [],
+      knowledgeHits: kbHits,
+      mode: "learn",
     };
   }
 
@@ -346,15 +491,27 @@ export function buildRagAnswer(
         ? `L’aire culturelle ${culture.nameFr} : ${culture.summaryFr}\n\nÀ explorer notamment : ${culture.themes.join(", ")}.\n\nDites-moi combien de jours vous avez, ou une ville de départ, et je vous propose un parcours concret.`
         : `The ${culture.nameEn} cultural area: ${culture.summaryEn}\n\nWorth exploring: ${culture.themes.join(", ")}.\n\nTell me how many days you have, or a starting city, and I’ll suggest a concrete route.`,
       sourceIds: [],
+      knowledgeHits: kbHits,
+      mode: "knowledge",
     };
   }
 
   if (ctx.length === 0) {
+    if (kbHits.length > 0) {
+      return {
+        answer: formatKnowledgeAnswer(kbHits, locale),
+        sourceIds: [],
+        knowledgeHits: kbHits,
+        mode: "knowledge",
+      };
+    }
     return {
       answer: isFr
-        ? "Je n’ai pas assez d’éléments précis pour cette question. Reformulez avec une ville (Yaoundé, Douala, Kribi, Foumban, Limbé…) ou une aire culturelle (Sawa, Grassfields, Fang-Beti, Sudano-Sahelian), et je vous guide."
-        : "I don’t have enough specifics for that yet. Try a city (Yaoundé, Douala, Kribi, Foumban, Limbé…) or a cultural area (Sawa, Grassfields, Fang-Beti, Sudano-Sahelian), and I’ll guide you.",
+        ? "Je n’ai pas assez d’éléments précis pour cette question. Reformulez avec une ville (Yaoundé, Douala, Kribi, Foumban, Limbé…), une aire culturelle (Sawa, Grassfields, Fang-Beti, Sudano-Sahelian), ou un thème (histoire, visa, climat, gastronomie), et je vous guide."
+        : "I don’t have enough specifics for that yet. Try a city (Yaoundé, Douala, Kribi, Foumban, Limbé…), a cultural area (Sawa, Grassfields, Fang-Beti, Sudano-Sahelian), or a theme (history, visa, climate, food), and I’ll guide you.",
       sourceIds: [],
+      knowledgeHits: [],
+      mode: "fallback",
     };
   }
 
@@ -410,9 +567,19 @@ export function buildRagAnswer(
     ? "\n\nVous voulez un mini-itinéraire jour par jour ? Indiquez durée, budget et centres d’intérêt (culture, nature, plage…)."
     : "\n\nWant a day-by-day mini itinerary? Tell me duration, budget and interests (culture, nature, beach…).";
 
+  // Light KB garnish when places answer a tourism ask
+  const kbNote =
+    kbHits.length > 0 && isKnowledgeQuestion(query)
+      ? isFr
+        ? `\n\nRepère pays : ${kbHits[0].body.slice(0, 180)}…`
+        : `\n\nCountry note: ${kbHits[0].body.slice(0, 180)}…`
+      : "";
+
   return {
-    answer: `${intro}\n\n${list}${budgetNote}${outro}`,
+    answer: `${intro}\n\n${list}${budgetNote}${kbNote}${outro}`,
     sourceIds: topPlaces.map((d) => d.id),
+    knowledgeHits: kbHits,
+    mode: "places",
   };
 }
 
@@ -427,6 +594,7 @@ export function buildFactsForLlm(
     6,
     catalog,
   );
+  const kbHits = retrieveKnowledge(query, locale, 5);
   const isFr = locale === "fr";
   const lines = destinations.map((d) => {
     const loc = getLocalizedDestination(d, locale);
@@ -445,9 +613,15 @@ export function buildFactsForLlm(
           )
           .join("\n")}`
       : "";
+  const kbBlock = formatKnowledgeFacts(kbHits, locale);
+  const parts = [kbBlock, lines.join("\n"), cultureLine, exprLines]
+    .map((p) => p.trim())
+    .filter(Boolean);
   return {
-    facts: `${lines.join("\n")}${cultureLine}${exprLines}`.trim() || "(no matches)",
+    facts: parts.join("\n\n").trim() || "(no matches)",
     sourceIds: destinations.map((d) => d.id),
+    knowledgeHits: kbHits,
+    localFactsThin: destinations.length === 0 && kbHits.length < 2,
   };
 }
 

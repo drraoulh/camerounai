@@ -75,8 +75,31 @@ export interface TripRequest {
   budgetFcfa: number;
   people: number;
   interests: string[];
+  /** solo | couple | family | friends | group — inferred if omitted */
   travelType?: string;
+  /** economy | standard | comfort | premium — inferred from budget if omitted */
+  hotelTier?: string;
   locale?: Locale;
+}
+
+export type TripActivityKind =
+  | "nature"
+  | "culture"
+  | "visit"
+  | "restaurant"
+  | "hotel"
+  | "transport";
+
+export type HotelTier = "economy" | "standard" | "comfort" | "premium";
+export type PartyStyle = "solo" | "couple" | "family" | "friends" | "group";
+
+export interface TripPreferences {
+  hotelTier: HotelTier;
+  partyStyle: PartyStyle;
+  interests: string[];
+  perPersonBudgetFcfa: number;
+  nightlyHotelBudgetFcfa: number;
+  roomsNeeded: number;
 }
 
 export interface DayPlan {
@@ -85,10 +108,12 @@ export interface DayPlan {
   activities: {
     name: string;
     time: string;
+    kind?: TripActivityKind;
     transport?: string;
     meal?: string;
     costFcfa: number;
     notes?: string;
+    placeId?: string;
   }[];
   estimatedCostFcfa: number;
 }
@@ -100,4 +125,10 @@ export interface TripPlan {
   withinBudget: boolean;
   budgetNote: string;
   placeIds: string[];
+  /** Named hotels / restaurants referenced in the plan (for UI / chat). */
+  stayIds?: string[];
+  eatIds?: string[];
+  preferences?: TripPreferences;
+  /** Personalized tips for the traveler */
+  recommendations?: string[];
 }
