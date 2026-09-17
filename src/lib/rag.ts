@@ -4,6 +4,14 @@ import { expressions } from "@/data/expressions";
 import { generateTripPlan } from "./trip-planner";
 import { decodeHtmlEntities } from "./text";
 import { getLocalizedDestination } from "./localize-place";
+import {
+  formatKnowledgeAnswer,
+  formatKnowledgeFacts,
+  isKnowledgeQuestion,
+  retrieveKnowledge,
+  type KbHit,
+} from "./knowledge-base";
+import { contentTokens } from "./chat-intent";
 import type { Destination, Locale, TripPlan } from "./types";
 
 function shortDesc(text: string, max = 140) {
@@ -19,12 +27,7 @@ function formatCost(n: number, locale: Locale) {
 }
 
 function tokenize(text: string) {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .split(/[^\p{L}\p{N}]+/u)
-    .filter((w) => w.length > 2);
+  return contentTokens(text);
 }
 
 function scoreDestination(dest: Destination, tokens: string[]) {
@@ -305,15 +308,27 @@ export function buildRagAnswer(
   query: string,
   locale: Locale,
   catalog: Destination[] = localDestinations,
-): { answer: string; sourceIds: string[]; tripPlan?: TripPlan } {
+): {
+  answer: string;
+  sourceIds: string[];
+  tripPlan?: TripPlan;
+  knowledgeHits?: KbHit[];
+  mode?: "greeting" | "learn" | "trip" | "knowledge" | "places" | "fallback";
+} {
   const { destinations: ctx, culture, learn, expressions: exprs } = retrieveContext(
     query,
     6,
     catalog,
   );
   const isFr = locale === "fr";
+  const kbHits = retrieveKnowledge(query, locale, 5);
 
-  if (learn && exprs.length > 0) {
+  const wantsPhrases =
+    learn &&
+    exprs.length > 0 &&
+    /(expression|phrase|apprend|learn|salutations?|greetings?)/i.test(query);
+
+  if (wantsPhrases) {
     const lines = exprs.map((e) => {
       const meaning = isFr ? e.translationFr : e.translationEn;
       const tip = isFr ? e.contextFr : e.contextEn;
@@ -327,6 +342,39 @@ export function buildRagAnswer(
         ? `Avec plaisir. Voici quelques expressions utiles sur place :\n\n${lines.join("\n\n")}\n\nElles sont là pour vous aider à échanger ; les usages locaux peuvent un peu varier.`
         : `Happy to help. Here are a few useful phrases on the ground:\n\n${lines.join("\n\n")}\n\nThese are practical guides; local usage can vary slightly.`,
       sourceIds: [],
+      knowledgeHits: kbHits,
+      mode: "learn",
+    };
+  }
+
+  // Country / practical / culture knowledge before place dumps
+  if (isKnowledgeQuestion(query) && kbHits.length > 0) {
+    return {
+      answer: formatKnowledgeAnswer(kbHits, locale),
+      sourceIds: [],
+      knowledgeHits: kbHits,
+      mode: "knowledge",
+    };
+  }
+
+  // Named language + learn intent without explicit "phrase" still offers expressions
+  // (skip when the visitor asks a general knowledge question about languages)
+  if (learn && exprs.length > 0 && !isKnowledgeQuestion(query)) {
+    const lines = exprs.map((e) => {
+      const meaning = isFr ? e.translationFr : e.translationEn;
+      const tip = isFr ? e.contextFr : e.contextEn;
+      if (isFr) {
+        return `• ${e.phrase} (${e.language}) — ${meaning}\n  Prononciation : ${e.pronunciation}${tip ? `\n  Quand l’utiliser : ${tip}` : ""}`;
+      }
+      return `• ${e.phrase} (${e.language}) — ${meaning}\n  Pronunciation: ${e.pronunciation}${tip ? `\n  When to use: ${tip}` : ""}`;
+    });
+    return {
+      answer: isFr
+        ? `Avec plaisir. Voici quelques expressions utiles sur place :\n\n${lines.join("\n\n")}\n\nElles sont là pour vous aider à échanger ; les usages locaux peuvent un peu varier.`
+        : `Happy to help. Here are a few useful phrases on the ground:\n\n${lines.join("\n\n")}\n\nThese are practical guides; local usage can vary slightly.`,
+      sourceIds: [],
+      knowledgeHits: kbHits,
+      mode: "learn",
     };
   }
 
@@ -337,6 +385,8 @@ export function buildRagAnswer(
       answer: formatTripAnswer(plan, locale),
       sourceIds: plan.placeIds,
       tripPlan: plan,
+      knowledgeHits: kbHits,
+      mode: "trip",
     };
   }
 
@@ -346,15 +396,27 @@ export function buildRagAnswer(
         ? `L’aire culturelle ${culture.nameFr} : ${culture.summaryFr}\n\nÀ explorer notamment : ${culture.themes.join(", ")}.\n\nDites-moi combien de jours vous avez, ou une ville de départ, et je vous propose un parcours concret.`
         : `The ${culture.nameEn} cultural area: ${culture.summaryEn}\n\nWorth exploring: ${culture.themes.join(", ")}.\n\nTell me how many days you have, or a starting city, and I’ll suggest a concrete route.`,
       sourceIds: [],
+      knowledgeHits: kbHits,
+      mode: "knowledge",
     };
   }
 
   if (ctx.length === 0) {
+    if (kbHits.length > 0) {
+      return {
+        answer: formatKnowledgeAnswer(kbHits, locale),
+        sourceIds: [],
+        knowledgeHits: kbHits,
+        mode: "knowledge",
+      };
+    }
     return {
       answer: isFr
-        ? "Je n’ai pas assez d’éléments précis pour cette question. Reformulez avec une ville (Yaoundé, Douala, Kribi, Foumban, Limbé…) ou une aire culturelle (Sawa, Grassfields, Fang-Beti, Sudano-Sahelian), et je vous guide."
-        : "I don’t have enough specifics for that yet. Try a city (Yaoundé, Douala, Kribi, Foumban, Limbé…) or a cultural area (Sawa, Grassfields, Fang-Beti, Sudano-Sahelian), and I’ll guide you.",
+        ? "Je n’ai pas assez d’éléments précis pour cette question. Reformulez avec une ville (Yaoundé, Douala, Kribi, Foumban, Limbé…), une aire culturelle (Sawa, Grassfields, Fang-Beti, Sudano-Sahelian), ou un thème (histoire, visa, climat, gastronomie), et je vous guide."
+        : "I don’t have enough specifics for that yet. Try a city (Yaoundé, Douala, Kribi, Foumban, Limbé…), a cultural area (Sawa, Grassfields, Fang-Beti, Sudano-Sahelian), or a theme (history, visa, climate, food), and I’ll guide you.",
       sourceIds: [],
+      knowledgeHits: [],
+      mode: "fallback",
     };
   }
 
@@ -410,9 +472,19 @@ export function buildRagAnswer(
     ? "\n\nVous voulez un mini-itinéraire jour par jour ? Indiquez durée, budget et centres d’intérêt (culture, nature, plage…)."
     : "\n\nWant a day-by-day mini itinerary? Tell me duration, budget and interests (culture, nature, beach…).";
 
+  // Light KB garnish when places answer a tourism ask
+  const kbNote =
+    kbHits.length > 0 && isKnowledgeQuestion(query)
+      ? isFr
+        ? `\n\nRepère pays : ${kbHits[0].body.slice(0, 180)}…`
+        : `\n\nCountry note: ${kbHits[0].body.slice(0, 180)}…`
+      : "";
+
   return {
-    answer: `${intro}\n\n${list}${budgetNote}${outro}`,
+    answer: `${intro}\n\n${list}${budgetNote}${kbNote}${outro}`,
     sourceIds: topPlaces.map((d) => d.id),
+    knowledgeHits: kbHits,
+    mode: "places",
   };
 }
 
@@ -427,6 +499,7 @@ export function buildFactsForLlm(
     6,
     catalog,
   );
+  const kbHits = retrieveKnowledge(query, locale, 5);
   const isFr = locale === "fr";
   const lines = destinations.map((d) => {
     const loc = getLocalizedDestination(d, locale);
@@ -445,9 +518,15 @@ export function buildFactsForLlm(
           )
           .join("\n")}`
       : "";
+  const kbBlock = formatKnowledgeFacts(kbHits, locale);
+  const parts = [kbBlock, lines.join("\n"), cultureLine, exprLines]
+    .map((p) => p.trim())
+    .filter(Boolean);
   return {
-    facts: `${lines.join("\n")}${cultureLine}${exprLines}`.trim() || "(no matches)",
+    facts: parts.join("\n\n").trim() || "(no matches)",
     sourceIds: destinations.map((d) => d.id),
+    knowledgeHits: kbHits,
+    localFactsThin: destinations.length === 0 && kbHits.length < 2,
   };
 }
 

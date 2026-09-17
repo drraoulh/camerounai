@@ -15,15 +15,15 @@ const JURY_DEMO_EN =
 
 const PROMPTS_FR = [
   "Que visiter à Kribi ?",
-  "Culture Sawa en 2 jours",
+  "Histoire et régions du Cameroun",
+  "Formalités d’entrée et santé",
   "Apprends-moi 5 expressions utiles",
-  "Réduis mon budget à 100 000 FCFA",
 ];
 const PROMPTS_EN = [
   "What to visit in Kribi?",
-  "Sawa culture in 2 days",
+  "Cameroon history and regions",
+  "Entry formalities and health",
   "Teach me 5 useful phrases",
-  "Reduce my budget to 100,000 FCFA",
 ];
 
 function speak(text: string, locale: string) {
