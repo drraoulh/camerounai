@@ -209,7 +209,10 @@ function parsePeople(q: string): number {
   if (/famille|family|enfants|kids/.test(q)) return 4;
   const m = q.match(/(\d+)\s*(personnes?|people|pers)\b/i);
   if (m) return Number(m[1]);
+  if (/solo|seul(e)?\b|alone/.test(q)) return 1;
   if (/couple|\bdeux\b/.test(q)) return 2;
+  if (/amis|friends/.test(q)) return 4;
+  if (/groupe|group/.test(q)) return 6;
   return 2;
 }
 
@@ -251,23 +254,34 @@ export function parseTripIntent(query: string) {
 
   const interests: string[] = [];
   if (/culture|patrimoine|heritage|mus[eé]e/i.test(q)) interests.push("culture");
-  if (/nature|parc|for[eê]t|forest|eco|montagne|cascade|plage|beach/i.test(q))
+  if (/nature|parc|for[eê]t|forest|eco|montagne|cascade/i.test(q))
     interests.push("nature");
   if (/plage|beach|\bocean\b|\bla mer\b|\ben mer\b/i.test(q)) interests.push("plage");
-  if (/gastro|cuisine|food|manger|eat|restaurant|ndol/i.test(q))
+  if (/gastro|cuisine|food|manger|eat|restaurant|ndol|resto/i.test(q))
     interests.push("food", "restaurant");
   if (/h[oô]tel|h[eé]berg|sleep|nuit|lodging|stay|dormir/i.test(q))
     interests.push("hotel");
   if (/sawa/i.test(q)) interests.push("sawa", "culture");
-  if (/famille|family/i.test(q)) interests.push("famille");
-  // Balanced default plan: culture + nature + food (restaurants) + stay
+  if (/famille|family|enfant|kids/i.test(q)) interests.push("famille");
+  if (/eco|respons|durable/i.test(q)) interests.push("eco");
+
+  // Keep traveler choices — only add food default for lodging/meals coverage
   if (interests.length === 0) interests.push("culture", "nature", "food");
-  else {
-    if (!interests.includes("food") && !interests.includes("restaurant"))
-      interests.push("food");
-    if (!interests.some((i) => /nature|plage|culture/.test(i)))
-      interests.push("culture", "nature");
-  }
+  else if (!interests.includes("food") && !interests.includes("restaurant"))
+    interests.push("food");
+
+  let travelType: string | undefined;
+  if (/famille|family|enfant|kids/i.test(q)) travelType = "family";
+  else if (/couple|romantique/i.test(q)) travelType = "couple";
+  else if (/solo|seul(e)?\b|alone/i.test(q)) travelType = "solo";
+  else if (/amis|friends/i.test(q)) travelType = "friends";
+  else if (/groupe|group/i.test(q)) travelType = "group";
+
+  let hotelTier: string | undefined;
+  if (/econom|pas cher|cheap|backpack/i.test(q)) hotelTier = "economy";
+  else if (/luxe|premium|5\s*\*|haut de gamme/i.test(q)) hotelTier = "premium";
+  else if (/confort|comfort|4\s*\*/i.test(q)) hotelTier = "comfort";
+  else if (/standard|milieu/i.test(q)) hotelTier = "standard";
 
   const destination =
     city === "yaounde" || city === "yaoundé"
@@ -284,6 +298,8 @@ export function parseTripIntent(query: string) {
       : 150000,
     people: parsePeople(q),
     interests,
+    travelType,
+    hotelTier,
   };
 }
 
@@ -304,6 +320,13 @@ function formatTripAnswer(plan: TripPlan, locale: Locale): string {
     return isFr ? pair[0] : pair[1];
   };
 
+  const pref = plan.preferences;
+  const prefsLine = pref
+    ? isFr
+      ? `Préférences : groupe « ${pref.partyStyle} » · hôtel ${pref.hotelTier} (~${pref.nightlyHotelBudgetFcfa.toLocaleString("fr-FR")} FCFA/chambre/nuit, ${pref.roomsNeeded} ch.) · intérêts ${pref.interests.join(", ")}.`
+      : `Preferences: « ${pref.partyStyle} » party · ${pref.hotelTier} hotels (~${pref.nightlyHotelBudgetFcfa.toLocaleString("en-US")} FCFA/room/night, ${pref.roomsNeeded} room(s)) · interests ${pref.interests.join(", ")}.`
+    : "";
+
   const days = plan.days
     .map((d) => {
       const acts = d.activities
@@ -321,29 +344,46 @@ function formatTripAnswer(plan: TripPlan, locale: Locale): string {
     })
     .join("\n\n");
 
+  const reco =
+    plan.recommendations && plan.recommendations.length
+      ? [
+          "",
+          isFr ? "Recommandations :" : "Recommendations:",
+          ...plan.recommendations.map((r) => `• ${r}`),
+        ].join("\n")
+      : "";
+
   if (isFr) {
     return [
       plan.summary,
+      prefsLine,
       "",
       days,
       "",
       `Budget estimé : ${formatCost(plan.totalEstimatedFcfa, locale)}.`,
       plan.budgetNote,
+      reco,
       "",
-      "Chaque jour mêle visite (nature / culture), restaurant et, si besoin, une nuit d’hôtel. Ouvrez « Planifier » pour la carte. Montants indicatifs.",
-    ].join("\n");
+      "Dites-moi si vous préférez plus de nature, un hôtel plus simple, ou un rythme famille — je réajuste.",
+    ]
+      .filter(Boolean)
+      .join("\n");
   }
 
   return [
     plan.summary,
+    prefsLine,
     "",
     days,
     "",
     `Estimated budget: ${formatCost(plan.totalEstimatedFcfa, locale)}.`,
     plan.budgetNote,
+    reco,
     "",
-    "Each day mixes a visit (nature / culture), restaurants and lodging when needed. Open Plan your trip for the map. Amounts are indicative.",
-  ].join("\n");
+    "Tell me if you want more nature, a simpler hotel, or a family pace — I’ll adjust.",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 export function buildRagAnswer(
@@ -392,7 +432,19 @@ export function buildRagAnswer(
   // Trip plans first (budget + days) — before country-knowledge routing
   const tripIntent = parseTripIntent(query);
   if (tripIntent) {
-    const plan = generateTripPlan({ ...tripIntent, locale }, catalog);
+    const plan = generateTripPlan(
+      {
+        destination: tripIntent.destination,
+        days: tripIntent.days,
+        budgetFcfa: tripIntent.budgetFcfa,
+        people: tripIntent.people,
+        interests: tripIntent.interests,
+        travelType: tripIntent.travelType,
+        hotelTier: tripIntent.hotelTier,
+        locale,
+      },
+      catalog,
+    );
     return {
       answer: formatTripAnswer(plan, locale),
       sourceIds: plan.placeIds,

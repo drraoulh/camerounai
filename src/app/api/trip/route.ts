@@ -18,6 +18,8 @@ export async function POST(req: Request) {
           .split(/[,;]+/)
           .map((s) => s.trim())
           .filter(Boolean),
+    travelType: body.travelType ? String(body.travelType) : undefined,
+    hotelTier: body.hotelTier ? String(body.hotelTier) : undefined,
     locale,
   };
 
