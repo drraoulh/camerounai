@@ -10,16 +10,12 @@ export default function EventsPage() {
 
   return (
     <PageShell>
-      <PageHero
-        kicker={isFr ? "Agenda" : "Calendar"}
-        title={strings.events.title}
-        subtitle={strings.events.subtitle}
-      />
+      <PageHero title={strings.events.title} subtitle={strings.events.subtitle} />
       <div className="grid gap-6">
         {events.map((ev, i) => (
           <article
             key={ev.id}
-            className={`surface-panel grid overflow-hidden md:grid-cols-2 ${
+            className={`grid overflow-hidden rounded-[1.35rem] border border-[var(--line)] bg-white shadow-sm md:grid-cols-2 ${
               i % 2 === 1 ? "md:[&>*:first-child]:order-2" : ""
             }`}
           >

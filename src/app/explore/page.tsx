@@ -14,23 +14,13 @@ export default function ExplorePage() {
 
   return (
     <PageShell>
-      <PageHero
-        kicker={isFr ? "Territoires" : "Territories"}
-        title={strings.explore.title}
-        subtitle={strings.explore.subtitle}
-      />
+      <PageHero title={strings.explore.title} subtitle={strings.explore.subtitle} />
 
-      <div className="mb-5 flex items-end justify-between gap-3">
-        <div>
-          <p className="section-kicker">{isFr ? "Carte du pays" : "Country map"}</p>
-          <h2 className="section-title mt-2 text-2xl sm:text-3xl">
-            {isFr ? "Les 10 régions" : "The 10 regions"}
-          </h2>
-        </div>
-        <Link
-          href="/culture"
-          className="text-sm font-semibold text-[var(--cm-green)] underline-offset-4 hover:underline"
-        >
+      <div className="mb-4 flex items-end justify-between gap-3">
+        <h2 className="section-title text-2xl">
+          {isFr ? "Les 10 régions" : "The 10 regions"}
+        </h2>
+        <Link href="/culture" className="text-sm font-semibold text-[var(--cm-green)] hover:underline">
           {isFr ? "Aires culturelles →" : "Cultural areas →"}
         </Link>
       </div>
@@ -42,7 +32,7 @@ export default function ExplorePage() {
             <Link
               key={r.id}
               href={r.href}
-              className="media-card aspect-[3/4]"
+              className="media-card aspect-[3/4] rounded-3xl"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -72,10 +62,8 @@ export default function ExplorePage() {
         })}
       </div>
 
-      <section className="mt-16">
-        <p className="section-kicker">{isFr ? "Identités" : "Identities"}</p>
-        <div className="cm-stripe mt-3 mb-4" />
-        <h2 className="section-title mb-6 text-2xl sm:text-3xl">
+      <section className="mt-14">
+        <h2 className="section-title mb-4 text-2xl">
           {isFr ? "Aires culturelles" : "Cultural areas"}
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -83,7 +71,7 @@ export default function ExplorePage() {
             <Link
               key={area.id}
               href={area.href}
-              className="media-card aspect-[16/11]"
+              className="media-card aspect-[16/11] rounded-3xl"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -105,19 +93,22 @@ export default function ExplorePage() {
         </div>
       </section>
 
-      <div className="mt-12 flex flex-wrap gap-3">
-        <Link href="/map" className="btn-pill btn-pill--green">
+      <div className="mt-10 flex flex-wrap gap-3">
+        <Link
+          href="/map"
+          className="rounded-full bg-[var(--cm-green)] px-5 py-2.5 text-sm font-semibold text-white"
+        >
           {strings.nav.map}
         </Link>
         <Link
           href="/things-to-do"
-          className="btn-pill border border-[var(--line)] bg-white text-[var(--ink)]"
+          className="rounded-full border border-[var(--line)] px-5 py-2.5 text-sm font-semibold"
         >
           {strings.nav.things}
         </Link>
         <Link
           href="/culture"
-          className="btn-pill border border-[var(--line)] bg-white text-[var(--ink)]"
+          className="rounded-full border border-[var(--line)] px-5 py-2.5 text-sm font-semibold"
         >
           {strings.nav.culture}
         </Link>

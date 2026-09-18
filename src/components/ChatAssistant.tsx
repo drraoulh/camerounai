@@ -6,7 +6,9 @@ import { useSearchParams } from "next/navigation";
 import { Mic, MicOff, Send, Sparkles, Volume2 } from "lucide-react";
 import clsx from "clsx";
 import { useLocale } from "./LocaleProvider";
-import type { ChatMessage } from "@/lib/types";
+import { speakCulturalPhrase, stopSpeaking, nativeAudioSrc } from "@/lib/speak";
+import { answerStayPhrase } from "@/lib/say-phrase";
+import type { ChatMessage, LanguageTrackId } from "@/lib/types";
 
 const JURY_DEMO_FR =
   "Bonjour, je viens au Cameroun pour trois jours. Je suis avec ma famille à Yaoundé. Nous avons un budget de 150 000 FCFA et nous aimons la culture et la nature.";
@@ -14,16 +16,16 @@ const JURY_DEMO_EN =
   "Hello, I am coming to Cameroon for three days. I am with my family in Yaoundé. We have a budget of 150,000 FCFA and we like culture and nature.";
 
 const PROMPTS_FR = [
-  "Famille 4 pers, 3 jours Yaoundé, 150000 FCFA, culture et nature",
-  "Couple à Kribi 2 jours, plage, hôtel confort, budget 200000",
-  "Solo économique Douala 2 jours, restos et culture",
-  "Histoire du Cameroun",
+  "Comment dit-on bonjour en mbouda ?",
+  "Comment dit-on bonjour à Douala ?",
+  "Comment dit-on merci en shüpamom ?",
+  "Que visiter à Kribi ?",
 ];
 const PROMPTS_EN = [
-  "Family of 4, 3 days Yaoundé, 150000 FCFA, culture and nature",
-  "Couple in Kribi 2 days, beach, comfort hotel, budget 200000",
-  "Solo budget Douala 2 days, food and culture",
-  "Cameroon history",
+  "How do you say hello in Mbouda?",
+  "How do you say hello in Douala?",
+  "How do you say thank you in Shüpamom?",
+  "What to visit in Kribi?",
 ];
 
 function speak(text: string, locale: string) {
@@ -68,30 +70,41 @@ function MessageBody({ content }: { content: string }) {
 }
 
 type Props = {
-  /** full = page assistant · widget = panneau flottant */
-  variant?: "full" | "widget";
   className?: string;
   onClose?: () => void;
 };
 
-export function ChatAssistant({
-  variant = "full",
-  className,
-  onClose,
-}: Props) {
+export function ChatAssistant({ className, onClose }: Props) {
   const { locale, strings } = useLocale();
   const searchParams = useSearchParams();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [listening, setListening] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const [hasTrip, setHasTrip] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const bootstrapped = useRef(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const prompts = locale === "fr" ? PROMPTS_FR : PROMPTS_EN;
-  const isWidget = variant === "widget";
   const isFr = locale === "fr";
+
+  const playCue = (
+    cue: NonNullable<ChatMessage["speak"]>,
+  ) => {
+    stopSpeaking();
+    setPlaying(true);
+    speakCulturalPhrase({
+      langId: cue.langId,
+      phrase: cue.phrase,
+      pronunciation: cue.pronunciation,
+      stepId: cue.stepId,
+      listeners: {
+        onStart: () => setPlaying(true),
+        onEnd: () => setPlaying(false),
+      },
+    });
+  };
 
   const send = useCallback(
     async (text: string, speakReply = false) => {
@@ -99,6 +112,19 @@ export function ChatAssistant({
       if (!trimmed || loading) return;
       setMessages((m) => [...m, { role: "user", content: trimmed }]);
       setInput("");
+      const stay = answerStayPhrase(trimmed, locale);
+      if (stay) {
+        if (stay.speak) playCue(stay.speak);
+        setMessages((m) => [
+          ...m,
+          {
+            role: "assistant",
+            content: stay.answer,
+            speak: stay.speak,
+          },
+        ]);
+        return;
+      }
       setLoading(true);
       try {
         const res = await fetch("/api/chat", {
@@ -109,8 +135,17 @@ export function ChatAssistant({
         const data = (await res.json()) as {
           answer: string;
           tripPlan?: { placeIds?: string[] } | null;
+          speak?: {
+            langId: LanguageTrackId;
+            phrase: string;
+            pronunciation: string;
+            stepId?: string;
+          } | null;
         };
-        setMessages((m) => [...m, { role: "assistant", content: data.answer }]);
+        setMessages((m) => [
+          ...m,
+          { role: "assistant", content: data.answer, speak: data.speak ?? undefined },
+        ]);
         if (data.tripPlan) {
           setHasTrip(true);
           try {
@@ -126,7 +161,11 @@ export function ChatAssistant({
             /* ignore */
           }
         }
-        if (speakReply) speak(data.answer, locale);
+        if (data.speak) {
+          playCue(data.speak);
+        } else if (speakReply) {
+          speak(data.answer, locale);
+        }
       } catch {
         setMessages((m) => [
           ...m,
@@ -145,13 +184,13 @@ export function ChatAssistant({
   );
 
   useEffect(() => {
-    if (isWidget || bootstrapped.current) return;
+    if (bootstrapped.current) return;
     const q = searchParams.get("q");
     if (q?.trim()) {
       bootstrapped.current = true;
       void send(q.trim(), false);
     }
-  }, [searchParams, send, isWidget]);
+  }, [searchParams, send]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -192,26 +231,18 @@ export function ChatAssistant({
   };
 
   return (
-    <div
-      className={clsx(
-        "chat-shell flex flex-col bg-white",
-        isWidget ? "chat-shell--widget" : "chat-shell--full",
-        className,
-      )}
-    >
+    <div className={clsx("chat-shell chat-shell--full flex flex-col bg-white", className)}>
       <div className="chat-shell__toolbar">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-          {!isWidget && (
-            <button
-              type="button"
-              onClick={runJuryDemo}
-              disabled={loading}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--cm-green-deep)] ring-1 ring-[var(--cm-green)]/20 hover:bg-[var(--cm-green)]/10 disabled:opacity-50"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              {isFr ? "Démo jury (voix)" : "Jury demo (voice)"}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={runJuryDemo}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--cm-green-deep)] ring-1 ring-[var(--cm-green)]/20 hover:bg-[var(--cm-green)]/10 disabled:opacity-50"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            {isFr ? "Démo jury (voix)" : "Jury demo (voice)"}
+          </button>
           {hasTrip && (
             <Link
               href="/trip"
@@ -222,11 +253,6 @@ export function ChatAssistant({
             </Link>
           )}
         </div>
-        {isWidget && (
-          <p className="truncate text-xs font-semibold text-[var(--muted)]">
-            {strings.assistant.title}
-          </p>
-        )}
       </div>
 
       <div className="chat-shell__messages">
@@ -234,8 +260,8 @@ export function ChatAssistant({
           <div className="space-y-4">
             <p className="text-sm text-[var(--muted)]">
               {isFr
-                ? "Posez une question sur le Cameroun : lieux, budget, culture, langues…"
-                : "Ask anything about Cameroon: places, budget, culture, languages…"}
+                ? "Posez une question. Exemple : comment dit-on bonjour en mbouda — l’IA répond et joue l’enregistrement."
+                : "Ask a question. Example: how do you say hello in Mbouda — the AI answers and plays the recording."}
             </p>
             <div className="flex flex-wrap gap-2">
               {prompts.map((p) => (
@@ -265,16 +291,40 @@ export function ChatAssistant({
             ) : (
               msg.content
             )}
-            {msg.role === "assistant" && (
+            {msg.role === "assistant" && msg.speak ? (
+              <>
+                <audio
+                  className="mt-3 w-full"
+                  src={nativeAudioSrc(msg.speak) ?? undefined}
+                  controls
+                  playsInline
+                  preload="auto"
+                />
+                <button
+                  type="button"
+                  className="mt-2 inline-flex items-center gap-2 rounded-full bg-[var(--cm-green)] px-3 py-1.5 text-xs font-semibold text-white"
+                  onClick={() => playCue(msg.speak!)}
+                >
+                  <Volume2 className={clsx("h-3.5 w-3.5", playing && "animate-pulse")} />
+                  {playing
+                    ? isFr
+                      ? "Lecture…"
+                      : "Playing…"
+                    : isFr
+                      ? "Réécouter"
+                      : "Play again"}
+                </button>
+              </>
+            ) : msg.role === "assistant" ? (
               <button
                 type="button"
-                className="mt-2 inline-flex items-center gap-1 text-[10px] font-medium text-[var(--muted)] hover:text-[var(--ink)]"
+                className="mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold text-[var(--muted)] hover:text-[var(--ink)]"
                 onClick={() => speak(msg.content, locale)}
               >
-                <Volume2 className="h-3 w-3" />
+                <Volume2 className="h-3.5 w-3.5" />
                 {isFr ? "Écouter" : "Listen"}
               </button>
-            )}
+            ) : null}
           </div>
         ))}
         {loading && (
@@ -330,9 +380,7 @@ export function ChatAssistant({
           aria-label={strings.assistant.send}
         >
           <Send className="h-4 w-4" />
-          {!isWidget && (
-            <span className="hidden sm:inline">{strings.assistant.send}</span>
-          )}
+          <span className="hidden sm:inline">{strings.assistant.send}</span>
         </button>
       </form>
       {listening && (

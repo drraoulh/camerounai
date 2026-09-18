@@ -38,7 +38,7 @@ export async function POST(req: Request) {
         inputs: clipped,
         options: { wait_for_model: true },
       }),
-      signal: AbortSignal.timeout(60000),
+      signal: AbortSignal.timeout(12000),
     });
 
     if (!res.ok) {
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
       status: 200,
       headers: {
         "Content-Type": contentType || "audio/flac",
-        "Cache-Control": "no-store",
+        "Cache-Control": "public, max-age=86400, immutable",
       },
     });
   } catch (e) {

@@ -1,10 +1,29 @@
 /** Full voice catalogue: browser SpeechSynthesis (reliable) + optional HF TTS. */
 
 import {
+  medumbaFileCandidates,
+  medumbaTakeFor,
+} from "@/data/medumba-voicebank";
+import {
+  mboudaFileCandidates,
+  mboudaTakeFor,
+} from "@/data/mbouda-voicebank";
+import {
+  shupamomFileCandidates,
+  shupamomTakeFor,
+} from "@/data/shupamom-voicebank";
+import {
+  languageVoice,
+  phoneticForSpeech,
+  trackFromLanguage,
+  type CulturalVoice,
+} from "./cultural-voice";
+import {
   HF_VOICES,
   defaultCameroonVoiceId,
   type HfVoiceOption,
 } from "./hf-voices";
+import type { CulturalZone, LanguageTrackId } from "./types";
 
 export type { HfVoiceOption };
 export { HF_VOICES, defaultCameroonVoiceId };
@@ -83,13 +102,27 @@ export function listAllVoices(): VoiceOption[] {
 
 function pickBrowserVoice(
   preferredLang: string,
+  preferLangs?: string[],
 ): SpeechSynthesisVoice | undefined {
   const voices = loadVoices();
   if (!voices.length) return undefined;
+  const ranked = [...(preferLangs ?? []), preferredLang];
+  for (const want of ranked) {
+    const exact = voices.find(
+      (v) => v.lang.toLowerCase() === want.toLowerCase(),
+    );
+    if (exact) return exact;
+    const prefix = voices.find((v) =>
+      v.lang.toLowerCase().startsWith(want.slice(0, 2).toLowerCase()),
+    );
+    if (prefix && want.length <= 3) return prefix;
+  }
   const want = preferredLang.toLowerCase();
   const cm = voices.find(
     (v) =>
-      /cm|cameroon|cameroun/i.test(`${v.name} ${v.lang}`) ||
+      /cm|cameroon|cameroun|senegal|nigeria|ghana|ivory|cote/i.test(
+        `${v.name} ${v.lang}`,
+      ) ||
       v.lang.toLowerCase() === "fr-cm" ||
       v.lang.toLowerCase() === "en-cm",
   );
@@ -205,6 +238,170 @@ export function isSpeaking() {
   return Boolean(synth || audio);
 }
 
+const audioCache = new Map<string, string>();
+const nativeProbe = new Map<string, boolean>();
+
+async function firstExistingUrl(urls: string[]): Promise<string | null> {
+  for (const url of urls) {
+    const hit = nativeProbe.get(url);
+    if (hit === true) return url;
+    if (hit === false) continue;
+    try {
+      const res = await fetch(url, { method: "HEAD", cache: "force-cache" });
+      const ok =
+        res.ok && !(res.headers.get("content-type") || "").includes("text/html");
+      nativeProbe.set(url, ok);
+      if (ok) return url;
+    } catch {
+      nativeProbe.set(url, false);
+    }
+  }
+  return null;
+}
+
+function playFirstAvailable(
+  urls: string[],
+  playbackRate: number,
+  listeners?: SpeakListeners,
+): Promise<boolean> {
+  return new Promise((resolve) => {
+    let index = 0;
+    const attempt = () => {
+      if (index >= urls.length) {
+        listeners?.onEnd?.();
+        resolve(false);
+        return;
+      }
+      const url = urls[index++];
+      stopSpeaking();
+      const audio = new Audio();
+      audio.preload = "auto";
+      audio.setAttribute("playsinline", "true");
+      audio.src = url;
+      audio.playbackRate = Math.min(1.15, Math.max(0.55, playbackRate));
+      currentAudio = audio;
+      const fail = () => {
+        if (currentAudio === audio) currentAudio = null;
+        attempt();
+      };
+      audio.onended = () => {
+        currentAudio = null;
+        listeners?.onEnd?.();
+        resolve(true);
+      };
+      audio.onerror = fail;
+      listeners?.onStart?.();
+      void audio.play().catch(fail);
+    };
+    attempt();
+  });
+}
+
+function nativeTakeIds(
+  langId: LanguageTrackId,
+  opts: { phrase: string; stepId?: string },
+): string[] {
+  if (langId === "shupamom") {
+    if (opts.stepId === "sp-3") return ["hmhm", "mbey"];
+    const take = shupamomTakeFor(opts);
+    return take ? [take.id] : [];
+  }
+  if (langId === "medumba") {
+    const take = medumbaTakeFor(opts);
+    return take ? [take.id] : [];
+  }
+  if (langId === "mbouda") {
+    const take = mboudaTakeFor(opts);
+    return take ? [take.id] : [];
+  }
+  return [];
+}
+
+function nativeFileCandidates(
+  langId: LanguageTrackId,
+  takeId: string,
+  speed: "normal" | "slow",
+) {
+  if (langId === "medumba") return medumbaFileCandidates(takeId, speed);
+  if (langId === "mbouda") return mboudaFileCandidates(takeId, speed);
+  if (langId === "shupamom") return shupamomFileCandidates(takeId, speed);
+  return [];
+}
+
+async function speakNativeTakes(
+  langId: LanguageTrackId,
+  opts: {
+    phrase: string;
+    stepId?: string;
+    slow?: boolean;
+    listeners?: SpeakListeners;
+  },
+): Promise<boolean> {
+  const ids = nativeTakeIds(langId, {
+    phrase: opts.phrase,
+    stepId: opts.stepId,
+  });
+  if (!ids.length) return false;
+
+  const speed = opts.slow ? "slow" : "normal";
+  for (let i = 0; i < ids.length; i++) {
+    const last = i === ids.length - 1;
+    const urls = [
+      ...nativeFileCandidates(langId, ids[i], speed),
+      ...(opts.slow ? nativeFileCandidates(langId, ids[i], "normal") : []),
+    ];
+    const ok = await playFirstAvailable(
+      urls,
+      opts.slow && speed === "slow" ? 0.72 : 1,
+      last ? { onStart: opts.listeners?.onStart, onEnd: opts.listeners?.onEnd } : { onStart: opts.listeners?.onStart },
+    );
+    if (!ok) {
+      if (!last) opts.listeners?.onEnd?.();
+      return i > 0;
+    }
+  }
+  return true;
+}
+
+export function nativeAudioSrc(opts: {
+  langId: LanguageTrackId;
+  phrase: string;
+  stepId?: string;
+}): string | null {
+  const ids = nativeTakeIds(opts.langId, {
+    phrase: opts.phrase,
+    stepId: opts.stepId,
+  });
+  if (!ids[0]) return null;
+  return nativeFileCandidates(opts.langId, ids[0], "normal")[0] ?? null;
+}
+
+function cacheKey(model: string, text: string) {
+  return `${model}::${text}`;
+}
+
+async function fetchHfAudio(model: string, text: string): Promise<string | null> {
+  const key = cacheKey(model, text);
+  const cached = audioCache.get(key);
+  if (cached) return cached;
+  try {
+    const res = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, model }),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    if (!blob.size || (blob.type && blob.type.includes("json"))) return null;
+    const url = URL.createObjectURL(blob);
+    audioCache.set(key, url);
+    return url;
+  } catch {
+    return null;
+  }
+}
+
 async function speakWithHf(
   text: string,
   model: string,
@@ -212,40 +409,25 @@ async function speakWithHf(
   rate: number,
   listeners?: SpeakListeners,
 ): Promise<boolean> {
-  stopSpeaking();
-  listeners?.onStart?.();
   try {
-    const res = await fetch("/api/tts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, model }),
-    });
-    if (!res.ok) {
-      listeners?.onEnd?.();
-      return false;
-    }
-    const blob = await res.blob();
-    if (!blob.size || (blob.type && blob.type.includes("json"))) {
-      listeners?.onEnd?.();
-      return false;
-    }
-    const url = URL.createObjectURL(blob);
+    const url = await fetchHfAudio(model, text);
+    if (!url) return false;
+    stopSpeaking();
     const audio = new Audio(url);
+    audio.playbackRate = Math.min(1.15, Math.max(0.55, rate));
     currentAudio = audio;
+    listeners?.onStart?.();
     audio.onended = () => {
-      URL.revokeObjectURL(url);
       currentAudio = null;
       listeners?.onEnd?.();
     };
     audio.onerror = () => {
-      URL.revokeObjectURL(url);
       currentAudio = null;
       listeners?.onEnd?.();
     };
     await audio.play();
     return true;
   } catch {
-    listeners?.onEnd?.();
     return false;
   }
 }
@@ -256,6 +438,8 @@ function speakWithBrowser(
   voiceURI: string | null,
   rate: number,
   listeners?: SpeakListeners,
+  pitch = 1,
+  preferLangs?: string[],
 ) {
   if (typeof window === "undefined" || !window.speechSynthesis) {
     listeners?.onEnd?.();
@@ -264,7 +448,6 @@ function speakWithBrowser(
 
   const run = () => {
     stopSpeaking();
-    // Chrome often leaves synthesis in a stuck paused state
     try {
       window.speechSynthesis.resume();
     } catch {
@@ -274,11 +457,11 @@ function speakWithBrowser(
     const u = new SpeechSynthesisUtterance(text);
     u.lang = lang;
     u.rate = rate;
-    u.pitch = 1;
+    u.pitch = pitch;
     const voices = loadVoices();
     const voice = voiceURI
       ? voices.find((v) => v.voiceURI === voiceURI)
-      : pickBrowserVoice(lang);
+      : pickBrowserVoice(lang, preferLangs);
     if (voice) {
       u.voice = voice;
       u.lang = voice.lang;
@@ -296,7 +479,6 @@ function speakWithBrowser(
     window.speechSynthesis.speak(u);
   };
 
-  // Voices may load asynchronously (esp. Chrome/Edge)
   if (!loadVoices().length) {
     const once = () => {
       window.speechSynthesis.removeEventListener("voiceschanged", once);
@@ -308,6 +490,74 @@ function speakWithBrowser(
   }
 
   window.setTimeout(run, 20);
+}
+
+export type SpeakTuning = {
+  lang?: string;
+  rate?: number;
+  pitch?: number;
+  voiceId?: string;
+  preferLangs?: string[];
+  listeners?: SpeakListeners;
+};
+
+export function speakTuned(text: string, tuning: SpeakTuning = {}) {
+  const cleaned = cleanSpeakText(text);
+  if (!cleaned) return;
+  const lang = tuning.lang ?? "fr-FR";
+  const rate = tuning.rate ?? 0.95;
+  const pitch = tuning.pitch ?? 1;
+  const listeners = tuning.listeners;
+  const id =
+    tuning.voiceId ?? getStoredVoiceId(lang.startsWith("en") ? "en" : "fr");
+  const option = findVoiceOption(id);
+
+  if (option?.source === "hf") {
+    void (async () => {
+      const ok = await speakWithHf(
+        cleaned,
+        option.model,
+        option.lang || lang,
+        rate,
+        listeners,
+      );
+      if (!ok) {
+        speakWithBrowser(
+          cleaned,
+          lang,
+          null,
+          rate,
+          listeners,
+          pitch,
+          tuning.preferLangs,
+        );
+      }
+    })();
+    return;
+  }
+
+  if (option?.source === "browser") {
+    speakWithBrowser(
+      cleaned,
+      option.lang || lang,
+      option.voiceURI || null,
+      rate,
+      listeners,
+      pitch,
+      tuning.preferLangs,
+    );
+    return;
+  }
+
+  speakWithBrowser(
+    cleaned,
+    lang,
+    null,
+    rate,
+    listeners,
+    pitch,
+    tuning.preferLangs,
+  );
 }
 
 export function speakText(
@@ -352,6 +602,72 @@ export function speakText(
   }
 
   speakWithBrowser(cleaned, lang, null, rate, listeners);
+}
+
+export function speakCulturalPhrase(opts: {
+  langId?: LanguageTrackId;
+  areaId?: CulturalZone;
+  language?: string;
+  phrase: string;
+  pronunciation: string;
+  slow?: boolean;
+  stepId?: string;
+  listeners?: SpeakListeners;
+}) {
+  const langId =
+    opts.langId ??
+    (opts.language ? trackFromLanguage(opts.language) : undefined) ??
+    "duala";
+  const voice = languageVoice(langId);
+  const spoken = phoneticForSpeech(opts.pronunciation, opts.phrase);
+
+  if (langId === "shupamom" || langId === "medumba" || langId === "mbouda") {
+    void (async () => {
+      const ok = await speakNativeTakes(langId, {
+        phrase: opts.phrase,
+        stepId: opts.stepId,
+        slow: opts.slow,
+        listeners: opts.listeners,
+      });
+      if (ok) return;
+      speakTuned(spoken, {
+        lang: voice.preferLangs[0] ?? "fr-CM",
+        rate: opts.slow ? voice.slowRate : voice.rate,
+        pitch: voice.pitch,
+        voiceId: voice.hfId,
+        preferLangs: voice.preferLangs,
+        listeners: opts.listeners,
+      });
+    })();
+    return;
+  }
+
+  speakTuned(spoken, {
+    lang: voice.preferLangs[0] ?? "fr-CM",
+    rate: opts.slow ? voice.slowRate : voice.rate,
+    pitch: voice.pitch,
+    voiceId: voice.hfId,
+    preferLangs: voice.preferLangs,
+    listeners: opts.listeners,
+  });
+}
+
+export function prefetchCulturalAudio(
+  langId: LanguageTrackId,
+  phrase: string,
+  pronunciation: string,
+  stepId?: string,
+) {
+  if (langId === "shupamom" || langId === "medumba" || langId === "mbouda") {
+    for (const id of nativeTakeIds(langId, { phrase, stepId })) {
+      void firstExistingUrl(nativeFileCandidates(langId, id, "normal"));
+    }
+    return;
+  }
+  const voice: CulturalVoice = languageVoice(langId);
+  if (!voice.hfModel) return;
+  const spoken = phoneticForSpeech(pronunciation, phrase);
+  void fetchHfAudio(voice.hfModel, spoken);
 }
 
 export function speakPhrase(opts: {

@@ -1,7 +1,6 @@
 import { retrieveContext } from "./rag";
 import { decodeHtmlEntities } from "./text";
 import { getLocalizedDestination } from "./localize-place";
-import { formatKnowledgeFacts, retrieveKnowledge } from "./knowledge-base";
 import type { Destination, Locale } from "./types";
 
 function shortDesc(text: string, max = 160) {
@@ -17,7 +16,7 @@ function buildSystemPrompt(locale: Locale, contextBlock: string) {
   return isFr
     ? `Tu es Visit Cameroon, guide touristique officiel du Cameroun (MINTOUL).
 Ton chaleureux et clair. Réponds en français.
-Utilise UNIQUEMENT les faits du contexte (base de connaissances Cameroun + lieux). N’invente pas.
+Utilise UNIQUEMENT les faits du contexte. N’invente pas de lieux.
 Ne mentionne pas Supabase, RAG ni des IDs. Pas de markdown lourd.
 1–2 phrases d’intro, suggestions concrètes, une relance utile.
 Coûts = estimations. Max ~220 mots.
@@ -26,7 +25,7 @@ CONTEXTE :
 ${contextBlock}`
     : `You are Visit Cameroon, Cameroon’s official tourism guide (MINTOUL).
 Warm, clear tone. Reply in English.
-Use ONLY the context facts (Cameroon knowledge base + places). Do not invent.
+Use ONLY the context facts. Do not invent places.
 Never mention Supabase, RAG, or IDs. No heavy markdown.
 1–2 intro sentences, concrete suggestions, one useful follow-up.
 Costs are estimates. Max ~220 words.
@@ -42,7 +41,6 @@ function formatContext(locale: Locale, catalog?: Destination[]) {
       8,
       catalog,
     );
-    const kb = retrieveKnowledge(query, locale, 5);
     const destLines = destinations.map((d) => {
       const loc = getLocalizedDestination(d, locale);
       const desc = shortDesc(loc.description);
@@ -61,11 +59,7 @@ function formatContext(locale: Locale, catalog?: Destination[]) {
             )
             .join("\n")}`
         : "";
-    const kbBlock = formatKnowledgeFacts(kb, locale);
-    return [kbBlock, destLines.join("\n"), cultureLine, exprLines]
-      .map((p) => p.trim())
-      .filter(Boolean)
-      .join("\n\n");
+    return `${destLines.join("\n")}${cultureLine}${exprLines}`;
   };
 }
 

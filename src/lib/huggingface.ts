@@ -82,6 +82,7 @@ async function hfChatOnce(
     user: string;
     maxTokens?: number;
     temperature?: number;
+    timeoutMs?: number;
   },
 ): Promise<string | null> {
   const key = hfKey();
@@ -105,7 +106,7 @@ async function hfChatOnce(
           { role: "user", content: opts.user },
         ],
       }),
-      signal: AbortSignal.timeout(45000),
+      signal: AbortSignal.timeout(opts.timeoutMs ?? 45000),
     });
     if (!res.ok) return null;
     const data = (await res.json()) as {
@@ -127,9 +128,15 @@ export async function hfChatCompletion(opts: {
   user: string;
   maxTokens?: number;
   temperature?: number;
+  timeoutMs?: number;
+  maxAttempts?: number;
 }): Promise<string | null> {
   if (!hfKey()) return null;
-  for (const model of chatModelCandidates()) {
+  const models = chatModelCandidates().slice(
+    0,
+    Math.max(1, opts.maxAttempts ?? chatModelCandidates().length),
+  );
+  for (const model of models) {
     const text = await hfChatOnce(model, opts);
     if (text) return text;
   }
@@ -186,10 +193,15 @@ export type MtResult = {
 
 const EXPRESSION_LANG_TO_SLUG: Record<string, string> = {
   yemba: "yemba",
+  shupamom: "shupamom",
+  "shüpamom": "shupamom",
+  bamoun: "shupamom",
+  bamum: "shupamom",
   ewondo: "ewondo",
   duala: "bakweri",
   fulfulde: "fufulde",
   medumba: "medumba",
+  mbouda: "ngienboum",
   "cameroon pidgin": "english",
 };
 

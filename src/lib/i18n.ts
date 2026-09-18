@@ -19,6 +19,7 @@ export const copy = {
       culture: "Patrimoine",
       eco: "Écotourisme",
       learn: "Learn Cameroon",
+      games: "Jeux",
       nearMe: "Près de moi",
       stay: "Hébergement",
     },
@@ -46,7 +47,7 @@ export const copy = {
     },
     assistant: {
       title: "Guide IA Visit Cameroon",
-      placeholder: "Ex. : Que visiter à Yaoundé avec 100 000 FCFA ?",
+      placeholder: "Ex. : Comment dit-on bonjour en mbouda ?",
       send: "Envoyer",
       voiceStart: "Parler",
       voiceStop: "Arrêter",
@@ -81,6 +82,27 @@ export const copy = {
     learn: {
       title: "Learn Cameroon",
       subtitle: "Expressions utiles pour votre voyage",
+    },
+    games: {
+      title: "Jeux d’apprentissage",
+      subtitle:
+        "Progression unique pour visiteurs et Camerounais. Choisissez la langue de séjour ou la culture du pays.",
+      choose: "Vous voulez jouer pour la langue, ou pour la culture ?",
+      language: "Langues maternelles",
+      languageBody:
+        "Par langue de séjour : Duala, Yemba, Shüpamom, Medumba, Ewondo, Fulfulde. Mission Locale, audio au ton de la langue, +20 XP.",
+      languageLead:
+        "Parlez au guide : dites dans quelle ville vous êtes. Il vous répond, vous fait écouter, puis lance le jeu.",
+      culture: "Culture camerounaise",
+      cultureBody:
+        "Débloquez les 10 territoires culturels (régions officielles). Trophée : « Je connais les 10 aires culturelles ».",
+      cultureLead:
+        "Une mission par région. Voyageurs et Camerounais : la même carte à compléter.",
+      playLangue: "Ouvrir les missions langue",
+      playCulture: "Compléter les 10 aires",
+      pickLanguage: "1. Choisissez une aire",
+      pickTheme: "1. Choisissez un territoire",
+      pickGame: "2. Choisissez un niveau",
     },
     nearMe: {
       title: "Près de moi",
@@ -131,6 +153,7 @@ export const copy = {
       culture: "Heritage",
       eco: "Ecotourism",
       learn: "Learn Cameroon",
+      games: "Games",
       nearMe: "Near me",
       stay: "Stay",
     },
@@ -158,7 +181,7 @@ export const copy = {
     },
     assistant: {
       title: "Visit Cameroon AI Guide",
-      placeholder: "E.g. What to visit in Yaoundé with 100,000 FCFA?",
+      placeholder: "E.g. How do you say hello in Mbouda?",
       send: "Send",
       voiceStart: "Speak",
       voiceStop: "Stop",
@@ -193,6 +216,27 @@ export const copy = {
     learn: {
       title: "Learn Cameroon",
       subtitle: "Useful phrases for your trip",
+    },
+    games: {
+      title: "Learning games",
+      subtitle:
+        "One progression for visitors and Cameroonians. Choose stay language or the country’s culture.",
+      choose: "Do you want to play for language, or for culture?",
+      language: "Mother tongues",
+      languageBody:
+        "By stay language: Duala, Yemba, Shüpamom, Medumba, Ewondo, Fulfulde. Local Mission, audio in that language’s tone, +20 XP.",
+      languageLead:
+        "Talk to the guide: say which city you are in. It answers, lets you listen, then starts the game.",
+      culture: "Cameroonian culture",
+      cultureBody:
+        "Unlock the 10 cultural territories (official regions). Trophy: “I know the 10 cultural areas”.",
+      cultureLead:
+        "One mission per region. Visitors and Cameroonians: the same map to complete.",
+      playLangue: "Open language missions",
+      playCulture: "Complete the 10 areas",
+      pickLanguage: "1. Choose an area",
+      pickTheme: "1. Choose a territory",
+      pickGame: "2. Choose a level",
     },
     nearMe: {
       title: "Near me",

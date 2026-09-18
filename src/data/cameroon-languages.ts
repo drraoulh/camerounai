@@ -16,6 +16,11 @@ export type CameroonLang = {
 /** Official cameroon-int8 coverage — Yemba first (Visit Cameroon focus language). */
 export const CAMEROON_LANGS: CameroonLang[] = [
   { slug: "yemba", nameFr: "Yemba (Dschang / Ouest)", nameEn: "Yemba (Dschang / West)" },
+  {
+    slug: "shupamom",
+    nameFr: "Shüpamom (Bamoun / Foumban)",
+    nameEn: "Shüpamom (Bamum / Foumban)",
+  },
   { slug: "ewondo", nameFr: "Ewondo", nameEn: "Ewondo" },
   { slug: "aghem", nameFr: "Aghem", nameEn: "Aghem" },
   { slug: "awing", nameFr: "Awing", nameEn: "Awing" },

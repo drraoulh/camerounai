@@ -8,106 +8,116 @@ export function SiteFooter() {
   const isFr = locale === "fr";
 
   return (
-    <footer className="full-bleed mt-20 border-t border-[var(--line)] bg-[var(--cm-green-deep)] text-white">
-      <div className="h-1 w-full bg-gradient-to-r from-[var(--cm-green)] via-[var(--laterite)] to-[var(--cm-yellow)]" />
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 md:grid-cols-4">
+    <footer className="full-bleed mt-16 border-t border-[var(--line)] bg-[var(--bg-soft)]">
+      <div className="h-1 w-full bg-gradient-to-r from-[var(--cm-green)] via-[var(--cm-red)] to-[var(--cm-yellow)]" />
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4">
         <div className="md:col-span-1">
-          <p className="font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight">
-            Visit <span className="text-[var(--cm-yellow)]">Cameroon</span>
+          <p className="brand-wordmark text-2xl text-[var(--ink)]">
+            Visit <span className="text-[var(--cm-green)]">Cameroon</span>
           </p>
-          <p className="mt-3 text-sm text-white/70">{strings.tagline}</p>
-          <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--cm-yellow)]">
+          <p className="mt-3 text-sm text-[var(--muted)]">{strings.tagline}</p>
+          <p className="mt-4 text-xs font-medium uppercase tracking-wider text-[var(--cm-green)]">
             MINTOUL
           </p>
         </div>
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">
             {isFr ? "Découvrir" : "Discover"}
           </p>
-          <ul className="mt-4 space-y-2.5 text-sm text-white/85">
+          <ul className="mt-3 space-y-2 text-sm text-[var(--ink)]">
             <li>
-              <Link href="/things-to-do" className="hover:text-[var(--cm-yellow)]">
+              <Link href="/things-to-do" className="hover:text-[var(--cm-green)]">
                 {strings.nav.things}
               </Link>
             </li>
             <li>
-              <Link href="/explore" className="hover:text-[var(--cm-yellow)]">
+              <Link href="/explore" className="hover:text-[var(--cm-green)]">
                 {strings.nav.explore}
               </Link>
             </li>
             <li>
-              <Link href="/events" className="hover:text-[var(--cm-yellow)]">
+              <Link href="/events" className="hover:text-[var(--cm-green)]">
                 {strings.nav.events}
               </Link>
             </li>
             <li>
-              <Link href="/eat" className="hover:text-[var(--cm-yellow)]">
+              <Link href="/eat" className="hover:text-[var(--cm-green)]">
                 {strings.nav.eat}
               </Link>
             </li>
           </ul>
         </div>
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">
             {isFr ? "Planifier" : "Plan"}
           </p>
-          <ul className="mt-4 space-y-2.5 text-sm text-white/85">
+          <ul className="mt-3 space-y-2 text-sm text-[var(--ink)]">
             <li>
-              <Link href="/trip" className="hover:text-[var(--cm-yellow)]">
+              <Link href="/trip" className="hover:text-[var(--cm-green)]">
                 {strings.nav.plan}
               </Link>
             </li>
             <li>
-              <Link href="/stay" className="hover:text-[var(--cm-yellow)]">
+              <Link href="/stay" className="hover:text-[var(--cm-green)]">
                 {strings.nav.stay}
               </Link>
             </li>
             <li>
-              <Link href="/assistant" className="hover:text-[var(--cm-yellow)]">
+              <Link href="/assistant" className="hover:text-[var(--cm-green)]">
                 {strings.nav.assistant}
               </Link>
             </li>
             <li>
-              <Link href="/map" className="hover:text-[var(--cm-yellow)]">
+              <Link href="/favorites" className="hover:text-[var(--cm-green)]">
+                Top Picks
+              </Link>
+            </li>
+            <li>
+              <Link href="/map" className="hover:text-[var(--cm-green)]">
                 {strings.nav.map}
               </Link>
             </li>
             <li>
-              <Link href="/travel-tips" className="hover:text-[var(--cm-yellow)]">
+              <Link href="/travel-tips" className="hover:text-[var(--cm-green)]">
                 {strings.nav.tips}
               </Link>
             </li>
           </ul>
         </div>
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">
             {isFr ? "Plus" : "More"}
           </p>
-          <ul className="mt-4 space-y-2.5 text-sm text-white/85">
+          <ul className="mt-3 space-y-2 text-sm text-[var(--ink)]">
             <li>
-              <Link href="/culture" className="hover:text-[var(--cm-yellow)]">
+              <Link href="/culture" className="hover:text-[var(--cm-green)]">
                 {strings.nav.culture}
               </Link>
             </li>
             <li>
-              <Link href="/eco" className="hover:text-[var(--cm-yellow)]">
+              <Link href="/eco" className="hover:text-[var(--cm-green)]">
                 {strings.nav.eco}
               </Link>
             </li>
             <li>
-              <Link href="/learn" className="hover:text-[var(--cm-yellow)]">
+              <Link href="/learn" className="hover:text-[var(--cm-green)]">
                 {strings.nav.learn}
               </Link>
             </li>
             <li>
-              <Link href="/near-me" className="hover:text-[var(--cm-yellow)]">
+              <Link href="/games" className="hover:text-[var(--cm-green)]">
+                {strings.nav.games}
+              </Link>
+            </li>
+            <li>
+              <Link href="/near-me" className="hover:text-[var(--cm-green)]">
                 {strings.nav.nearMe}
               </Link>
             </li>
           </ul>
         </div>
       </div>
-      <div className="border-t border-white/10 px-4 py-5 text-center text-xs text-white/50">
+      <div className="border-t border-[var(--line)] px-4 py-4 text-center text-xs text-[var(--muted)]">
         {strings.footer}
       </div>
     </footer>

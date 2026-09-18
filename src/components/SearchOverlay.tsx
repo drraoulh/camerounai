@@ -32,9 +32,40 @@ export function SearchOverlay({ open, onClose }: Props) {
     if (open) setQ("");
   }, [open]);
 
+  const pages = useMemo(
+    () => [
+      {
+        href: "/games",
+        titleFr: "Jeux d’apprentissage",
+        titleEn: "Learning games",
+        keys: "jeux games langue culture yemba shupamom shüpamom medumba bangangte ewondo duala fulfulde quiz",
+      },
+      {
+        href: "/games/langue",
+        titleFr: "Jeux — langues maternelles",
+        titleEn: "Games — mother tongues",
+        keys: "langue language ewondo duala fulfulde yemba shupamom shüpamom medumba bangangte ecrire francais foumban",
+      },
+      {
+        href: "/games/culture",
+        titleFr: "Jeux — culture camerounaise",
+        titleEn: "Games — Cameroonian culture",
+        keys: "culture ngondo bikutsi sawa grassfields",
+      },
+      {
+        href: "/learn",
+        titleFr: "Learn Cameroon",
+        titleEn: "Learn Cameroon",
+        keys: "apprendre expressions phrases",
+      },
+    ],
+    [],
+  );
+
   const results = useMemo(() => {
     const query = q.trim().toLowerCase();
-    if (query.length < 2) return { places: [], events: [], regions: [] };
+    if (query.length < 2)
+      return { places: [], events: [], regions: [], pages: [] };
     return {
       places: places
         .filter((d) =>
@@ -71,13 +102,22 @@ export function SearchOverlay({ open, onClose }: Props) {
             .includes(query),
         )
         .slice(0, 4),
+      pages: pages
+        .filter((p) =>
+          [p.titleFr, p.titleEn, p.keys].join(" ").toLowerCase().includes(query),
+        )
+        .slice(0, 4),
     };
-  }, [q, places]);
+  }, [q, places, pages]);
 
   if (!open) return null;
 
   const hasResults =
-    results.places.length + results.events.length + results.regions.length > 0;
+    results.places.length +
+      results.events.length +
+      results.regions.length +
+      results.pages.length >
+    0;
 
   return (
     <div className="fixed inset-0 z-[80] bg-black/55 backdrop-blur-sm" onClick={onClose}>
@@ -116,6 +156,26 @@ export function SearchOverlay({ open, onClose }: Props) {
               </p>
             ) : (
               <div className="space-y-5">
+                {results.pages.length > 0 && (
+                  <section>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">
+                      {isFr ? "Pages" : "Pages"}
+                    </p>
+                    <ul className="space-y-1">
+                      {results.pages.map((p) => (
+                        <li key={p.href}>
+                          <Link
+                            href={p.href}
+                            onClick={onClose}
+                            className="block px-2 py-2 hover:bg-black/5"
+                          >
+                            {isFr ? p.titleFr : p.titleEn}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                )}
                 {results.places.length > 0 && (
                   <section>
                     <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">

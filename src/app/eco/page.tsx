@@ -39,13 +39,9 @@ export default function EcoPage() {
 
   return (
     <PageShell>
-      <PageHero
-        kicker={isFr ? "Responsable" : "Responsible"}
-        title={strings.eco.title}
-        subtitle={strings.eco.subtitle}
-      />
+      <PageHero title={strings.eco.title} subtitle={strings.eco.subtitle} />
 
-      <p className="mb-10 inline-flex items-center gap-2 rounded-full border border-[var(--cm-green)]/25 bg-[var(--accent-soft)] px-4 py-2 text-sm font-medium text-[var(--cm-green-deep)]">
+      <p className="mb-10 inline-flex items-center gap-2 rounded-full border border-[var(--cm-green)] bg-[var(--accent-soft)] px-4 py-2 text-sm font-medium text-[var(--cm-green)]">
         <Leaf className="h-4 w-4" aria-hidden />
         {strings.eco.responsible}
       </p>

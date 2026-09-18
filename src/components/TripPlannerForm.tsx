@@ -1,52 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Share2 } from "lucide-react";
-import clsx from "clsx";
 import { TourismMap } from "./TourismMap";
 import { useLocale } from "./LocaleProvider";
 import { usePlaces } from "./PlacesProvider";
 import type { TripPlan } from "@/lib/types";
 
-const INTEREST_OPTS = [
-  { id: "culture", fr: "Culture", en: "Culture" },
-  { id: "nature", fr: "Nature", en: "Nature" },
-  { id: "plage", fr: "Plage", en: "Beach" },
-  { id: "food", fr: "Gastronomie", en: "Food" },
-  { id: "eco", fr: "Éco", en: "Eco" },
-] as const;
-
-const PARTY_OPTS = [
-  { id: "solo", fr: "Solo", en: "Solo", people: 1 },
-  { id: "couple", fr: "Couple", en: "Couple", people: 2 },
-  { id: "family", fr: "Famille", en: "Family", people: 4 },
-  { id: "friends", fr: "Amis", en: "Friends", people: 4 },
-  { id: "group", fr: "Groupe", en: "Group", people: 6 },
-] as const;
-
-const HOTEL_OPTS = [
-  { id: "auto", fr: "Auto (budget)", en: "Auto (budget)" },
-  { id: "economy", fr: "Économique", en: "Economy" },
-  { id: "standard", fr: "Standard", en: "Standard" },
-  { id: "comfort", fr: "Confort", en: "Comfort" },
-  { id: "premium", fr: "Premium", en: "Premium" },
-] as const;
-
 export function TripPlannerForm() {
   const { locale, strings } = useLocale();
   const { places } = usePlaces();
-  const isFr = locale === "fr";
   const [destination, setDestination] = useState("Yaoundé");
   const [days, setDays] = useState(3);
   const [budgetFcfa, setBudgetFcfa] = useState(150000);
   const [people, setPeople] = useState(4);
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([
-    "culture",
-    "nature",
-    "food",
-  ]);
-  const [travelType, setTravelType] = useState("family");
-  const [hotelTier, setHotelTier] = useState("auto");
+  const [interests, setInterests] = useState("culture, nature");
   const [plan, setPlan] = useState<TripPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [shareNote, setShareNote] = useState<string | null>(null);
@@ -65,18 +33,6 @@ export function TripPlannerForm() {
     }
   }, []);
 
-  const interestsPayload = useMemo(() => {
-    const base = [...selectedInterests];
-    if (travelType === "family" && !base.includes("famille")) base.push("famille");
-    return base;
-  }, [selectedInterests, travelType]);
-
-  function toggleInterest(id: string) {
-    setSelectedInterests((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
-  }
-
   async function generate(overrideBudget?: number) {
     setLoading(true);
     setShareNote(null);
@@ -89,9 +45,7 @@ export function TripPlannerForm() {
           days,
           budgetFcfa: overrideBudget ?? budgetFcfa,
           people,
-          interests: interestsPayload,
-          travelType,
-          hotelTier: hotelTier === "auto" ? undefined : hotelTier,
+          interests: interests.split(/[,;]+/).map((s) => s.trim()),
           locale,
         }),
       });
@@ -115,7 +69,6 @@ export function TripPlannerForm() {
     if (!plan) return;
     const text = [
       plan.summary,
-      ...(plan.recommendations ?? []),
       ...plan.days.map(
         (d) =>
           `${d.title} (~${d.estimatedCostFcfa.toLocaleString("fr-FR")} FCFA)`,
@@ -128,14 +81,18 @@ export function TripPlannerForm() {
         await navigator.share({ title: "Visit Cameroon itinerary", text });
       } else {
         await navigator.clipboard.writeText(text);
-        setShareNote(isFr ? "Itinéraire copié." : "Itinerary copied.");
+        setShareNote(
+          locale === "fr" ? "Itinéraire copié." : "Itinerary copied.",
+        );
       }
     } catch {
       try {
         await navigator.clipboard.writeText(text);
-        setShareNote(isFr ? "Itinéraire copié." : "Itinerary copied.");
+        setShareNote(
+          locale === "fr" ? "Itinéraire copié." : "Itinerary copied.",
+        );
       } catch {
-        setShareNote(isFr ? "Partage indisponible." : "Share unavailable.");
+        setShareNote(locale === "fr" ? "Partage indisponible." : "Share unavailable.");
       }
     }
   }
@@ -158,14 +115,12 @@ export function TripPlannerForm() {
         .slice(0, 8);
 
   const field =
-    "mt-1.5 w-full rounded-full border border-[var(--line)] bg-white/90 px-4 py-2.5 text-sm outline-none transition focus:border-[var(--cm-green)] focus:ring-2 focus:ring-[var(--cm-green)]/15";
-  const chip =
-    "rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all";
+    "mt-1 w-full rounded-full border border-[var(--line)] bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/20";
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
       <form
-        className="surface-panel space-y-5 p-6 sm:p-7"
+        className="space-y-4 border border-[var(--line)] bg-white p-6"
         onSubmit={(e) => {
           e.preventDefault();
           void generate();
@@ -213,87 +168,20 @@ export function TripPlannerForm() {
             className={field}
           />
         </label>
-
-        <div>
-          <p className="text-sm text-[var(--muted)]">
-            {isFr ? "Qui voyage ?" : "Who’s travelling?"}
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {PARTY_OPTS.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                className={clsx(
-                  chip,
-                  travelType === p.id
-                    ? "border-[var(--cm-green)] bg-[var(--accent-soft)] text-[var(--cm-green)]"
-                    : "border-[var(--line)] text-[var(--muted)]",
-                )}
-                onClick={() => {
-                  setTravelType(p.id);
-                  setPeople(p.people);
-                }}
-              >
-                {isFr ? p.fr : p.en}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="text-sm text-[var(--muted)]">{strings.trip.interests}</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {INTEREST_OPTS.map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                className={clsx(
-                  chip,
-                  selectedInterests.includes(opt.id)
-                    ? "border-[var(--cm-green)] bg-[var(--accent-soft)] text-[var(--cm-green)]"
-                    : "border-[var(--line)] text-[var(--muted)]",
-                )}
-                onClick={() => toggleInterest(opt.id)}
-              >
-                {isFr ? opt.fr : opt.en}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="text-sm text-[var(--muted)]">
-            {isFr ? "Type d’hôtel" : "Hotel type"}
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {HOTEL_OPTS.map((h) => (
-              <button
-                key={h.id}
-                type="button"
-                className={clsx(
-                  chip,
-                  hotelTier === h.id
-                    ? "border-[var(--cm-green)] bg-[var(--accent-soft)] text-[var(--cm-green)]"
-                    : "border-[var(--line)] text-[var(--muted)]",
-                )}
-                onClick={() => setHotelTier(h.id)}
-              >
-                {isFr ? h.fr : h.en}
-              </button>
-            ))}
-          </div>
-        </div>
-
+        <label className="block text-sm">
+          <span className="text-[var(--muted)]">{strings.trip.interests}</span>
+          <input
+            value={interests}
+            onChange={(e) => setInterests(e.target.value)}
+            className={field}
+          />
+        </label>
         <button
           type="submit"
-          disabled={loading || selectedInterests.length === 0}
-          className="btn-pill btn-pill--green w-full justify-center disabled:opacity-50"
+          disabled={loading}
+          className="w-full rounded-full bg-[var(--ink)] py-3 text-sm font-semibold text-white disabled:opacity-50"
         >
-          {loading
-            ? isFr
-              ? "Génération…"
-              : "Generating…"
-            : strings.trip.generate}
+          {strings.trip.generate}
         </button>
         {plan && (
           <div className="flex flex-wrap gap-2">
@@ -310,7 +198,7 @@ export function TripPlannerForm() {
               className="inline-flex items-center justify-center gap-1.5 rounded-full border border-[var(--line)] px-4 py-2 text-sm"
             >
               <Share2 className="h-4 w-4" />
-              {isFr ? "Partager" : "Share"}
+              {locale === "fr" ? "Partager" : "Share"}
             </button>
           </div>
         )}
@@ -319,84 +207,23 @@ export function TripPlannerForm() {
 
       <div className="space-y-4">
         {plan ? (
-          <div className="surface-panel p-6 sm:p-7">
-            <p className="text-sm leading-relaxed text-[var(--muted)]">{plan.summary}</p>
-            {plan.preferences && (
-              <p className="mt-2 text-xs text-[var(--cm-green)]">
-                {isFr ? "Hôtel" : "Hotel"}: {plan.preferences.hotelTier} ·{" "}
-                {plan.preferences.roomsNeeded}{" "}
-                {isFr ? "chambre(s)" : "room(s)"} ·{" "}
-                {plan.preferences.partyStyle} ·{" "}
-                {plan.preferences.interests.join(", ")}
-              </p>
-            )}
+          <div className="border border-[var(--line)] bg-white p-6">
+            <p className="text-sm text-[var(--muted)]">{plan.summary}</p>
             <p className="mt-2 text-lg font-semibold">
-              {strings.trip.total}:{" "}
-              {plan.totalEstimatedFcfa.toLocaleString("fr-FR")} FCFA
+              {strings.trip.total}: {plan.totalEstimatedFcfa.toLocaleString("fr-FR")} FCFA
             </p>
             <p className="text-sm text-amber-900/80">{plan.budgetNote}</p>
-
-            {plan.recommendations && plan.recommendations.length > 0 && (
-              <div className="mt-4 rounded-[1.1rem] border border-[var(--cm-green)]/15 bg-[var(--accent-soft)]/70 p-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--cm-green-deep)]">
-                  {isFr ? "Recommandations" : "Recommendations"}
-                </p>
-                <ul className="mt-2 space-y-1.5 text-sm text-[var(--ink)]">
-                  {plan.recommendations.map((r) => (
-                    <li key={r}>• {r}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <ul className="mt-5 space-y-3">
+            <ul className="mt-4 space-y-3">
               {plan.days.map((d) => (
-                <li
-                  key={d.day}
-                  className="rounded-[1.05rem] border border-[var(--line)] bg-white/80 p-4 text-sm"
-                >
-                  <p className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--ink)]">
-                    {d.title}
-                  </p>
-                  {d.activities.map((a, i) => {
-                    const kind =
-                      a.kind === "nature"
-                        ? "Nature"
-                        : a.kind === "culture"
-                          ? "Culture"
-                          : a.kind === "restaurant"
-                            ? "Restaurant"
-                            : a.kind === "hotel"
-                              ? isFr
-                                ? "Hôtel"
-                                : "Stay"
-                              : a.kind === "visit"
-                                ? isFr
-                                  ? "Visite"
-                                  : "Visit"
-                                : null;
-                    return (
-                      <p key={i} className="mt-1.5 text-[var(--muted)]">
-                        <span className="font-medium text-[var(--ink)]">
-                          {a.time}
-                        </span>
-                        {kind ? (
-                          <span className="mx-1 text-[var(--cm-green)]">
-                            · {kind}
-                          </span>
-                        ) : null}
-                        : {a.name} (~{a.costFcfa.toLocaleString("fr-FR")} FCFA)
-                        {a.notes ? (
-                          <span className="mt-0.5 block text-xs leading-snug opacity-80">
-                            {a.notes}
-                          </span>
-                        ) : null}
-                      </p>
-                    );
-                  })}
-                  <p className="mt-2 text-xs text-[var(--accent)]">
-                    {isFr ? "Jour" : "Day"}:{" "}
-                    {d.estimatedCostFcfa.toLocaleString("fr-FR")} FCFA
+                <li key={d.day} className="border border-[var(--line)] p-3 text-sm">
+                  <p className="font-medium">{d.title}</p>
+                  {d.activities.map((a, i) => (
+                    <p key={i} className="mt-1 text-[var(--muted)]">
+                      {a.time} : {a.name} (~{a.costFcfa.toLocaleString("fr-FR")} FCFA)
+                    </p>
+                  ))}
+                  <p className="mt-1 text-xs text-[var(--accent)]">
+                    Jour: {d.estimatedCostFcfa.toLocaleString("fr-FR")} FCFA
                   </p>
                 </li>
               ))}
@@ -404,9 +231,9 @@ export function TripPlannerForm() {
           </div>
         ) : (
           <p className="text-sm text-[var(--muted)]">
-            {isFr
-              ? "Choisissez profil, intérêts et budget : l’itinéraire adapte hôtels, restos et visites."
-              : "Pick profile, interests and budget — the itinerary adapts hotels, restaurants and visits."}
+            {locale === "fr"
+              ? "Exemple jury : famille à Yaoundé, 3 jours, 150 000 FCFA, culture et nature."
+              : "Jury example: family in Yaoundé, 3 days, 150,000 FCFA, culture and nature."}
           </p>
         )}
         <TourismMap

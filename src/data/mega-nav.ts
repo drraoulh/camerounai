@@ -89,6 +89,13 @@ export const megaNav: MegaSection[] = [
         tagFr: "Expressions utiles",
         tagEn: "Useful phrases",
       },
+      {
+        href: "/games",
+        labelFr: "Jeux d’apprentissage",
+        labelEn: "Learning games",
+        tagFr: "Langues ou culture — à vous de choisir",
+        tagEn: "Language or culture — you choose",
+      },
     ],
     feature: {
       href: "/assistant",

@@ -1,22 +1,21 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Outfit } from "next/font/google";
+import { DM_Sans, Fraunces } from "next/font/google";
 import "./globals.css";
 import { LocaleProvider } from "@/components/LocaleProvider";
 import { FavoritesProvider } from "@/components/FavoritesProvider";
 import { PlacesProvider } from "@/components/PlacesProvider";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { FloatingChatbot } from "@/components/FloatingChatbot";
+import { GameProgressProvider } from "@/components/games/GameProgressProvider";
 
-const outfit = Outfit({
+const dmSans = DM_Sans({
   variable: "--font-body",
   subsets: ["latin"],
 });
 
-const cormorant = Cormorant_Garamond({
+const fraunces = Fraunces({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -30,16 +29,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="fr"
       data-scroll-behavior="smooth"
-      className={`${outfit.variable} ${cormorant.variable} h-full`}
+      className={`${dmSans.variable} ${fraunces.variable} h-full`}
     >
-      <body className="site-body min-h-full flex flex-col font-sans text-[var(--ink)] antialiased">
+      <body className="min-h-full flex flex-col bg-[var(--bg)] font-sans text-[var(--ink)] antialiased">
         <LocaleProvider>
           <FavoritesProvider>
             <PlacesProvider>
-              <SiteHeader />
-              <main className="flex-1">{children}</main>
-              <SiteFooter />
-              <FloatingChatbot />
+              <GameProgressProvider>
+                <SiteHeader />
+                <main className="flex-1">{children}</main>
+                <SiteFooter />
+              </GameProgressProvider>
             </PlacesProvider>
           </FavoritesProvider>
         </LocaleProvider>

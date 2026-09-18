@@ -15,11 +15,7 @@ export default function StayPage() {
 
   return (
     <PageShell>
-      <PageHero
-        kicker={isFr ? "Hébergement" : "Lodging"}
-        title={strings.stay.title}
-        subtitle={strings.stay.subtitle}
-      />
+      <PageHero title={strings.stay.title} subtitle={strings.stay.subtitle} />
 
       <p className="mb-8 text-sm text-[var(--muted)]">
         {isFr
@@ -29,7 +25,10 @@ export default function StayPage() {
 
       <div className="mb-8 flex flex-wrap gap-2">
         {cities.map((city) => (
-          <span key={city} className="chip">
+          <span
+            key={city}
+            className="rounded-full border border-[var(--line)] bg-white px-3 py-1 text-xs font-semibold text-[var(--ink)]"
+          >
             {city}
           </span>
         ))}

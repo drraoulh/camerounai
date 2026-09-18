@@ -14,7 +14,6 @@ export default function AboutCountryPage() {
   return (
     <PageShell>
       <PageHero
-        kicker={isFr ? "Pays" : "Country"}
         title={isFr ? "Le Cameroun" : "Cameroon"}
         subtitle={
           isFr
@@ -24,8 +23,8 @@ export default function AboutCountryPage() {
       />
 
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <section className="surface-panel p-5 sm:p-8">
-          <p className="section-kicker">
+        <section className="rounded-2xl border border-[var(--line)] bg-white p-5 sm:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--cm-green)]">
             {isFr ? "Histoire" : "History"}
           </p>
           <h2 className="section-title mt-2 text-2xl sm:text-3xl">
@@ -54,8 +53,8 @@ export default function AboutCountryPage() {
         </section>
 
         <aside className="space-y-4">
-          <div className="surface-panel p-5 sm:p-6">
-            <p className="section-kicker text-[var(--laterite)]">
+          <div className="rounded-2xl border border-[var(--line)] bg-white p-5 sm:p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--cm-red)]">
               {isFr ? "Institutions" : "Institutions"}
             </p>
             <h2 className="section-title mt-2 text-2xl">
@@ -77,8 +76,8 @@ export default function AboutCountryPage() {
             </p>
           </div>
 
-          <div className="surface-panel p-5 sm:p-6">
-            <p className="section-kicker">
+          <div className="rounded-2xl border border-[var(--line)] bg-white p-5 sm:p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">
               {isFr ? "Repères" : "At a glance"}
             </p>
             <dl className="mt-4 space-y-3 text-sm">
@@ -129,18 +128,21 @@ export default function AboutCountryPage() {
       </div>
 
       <div className="mt-10 flex flex-wrap gap-3">
-        <Link href="/travel-tips" className="btn-pill btn-pill--green">
+        <Link
+          href="/travel-tips"
+          className="rounded-full bg-[var(--cm-green)] px-5 py-2.5 text-sm font-semibold text-white"
+        >
           {isFr ? "Formalités & santé" : "Formalities & health"}
         </Link>
         <Link
           href="/explore"
-          className="btn-pill border border-[var(--line)] bg-white text-[var(--ink)]"
+          className="rounded-full border border-[var(--line)] px-5 py-2.5 text-sm font-semibold"
         >
           {strings.nav.explore}
         </Link>
         <Link
           href="/culture"
-          className="btn-pill border border-[var(--line)] bg-white text-[var(--ink)]"
+          className="rounded-full border border-[var(--line)] px-5 py-2.5 text-sm font-semibold"
         >
           {strings.nav.culture}
         </Link>

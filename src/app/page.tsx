@@ -88,7 +88,7 @@ const EXPERIENCES = [
 
 export default function Home() {
   const { locale, strings } = useLocale();
-  const { places } = usePlaces();
+  const { places, source, ready } = usePlaces();
   const isFr = locale === "fr";
   const [filter, setFilter] = useState<string>("all");
   const [destMode, setDestMode] = useState<"regions" | "culture">("regions");
@@ -118,46 +118,51 @@ export default function Home() {
   )}`;
 
   return (
-    <div className="pb-8">
-      {/* Full-bleed cinematic hero — brand first */}
-      <section className="hero-bleed full-bleed">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={heroImage}
-          alt=""
-          className="hero-bleed__media"
-          fetchPriority="high"
-          referrerPolicy="no-referrer"
-        />
-        <div className="hero-bleed__shade" aria-hidden />
-        <div className="hero-bleed__content">
-          <p className="hero-kicker fade-up">
-            {isFr ? "Guide officiel du tourisme" : "Official tourism guide"}
-          </p>
-          <h1 className="hero-brand fade-up-delay">
-            Visit <span>Cameroon</span>
-          </h1>
-          <p className="hero-lead fade-up-delay-2">{strings.hero.subtitle}</p>
-          <div className="fade-up-delay-2 mt-8 flex flex-wrap gap-3">
-            <Link href="/trip" className="btn-pill btn-pill--light">
-              {strings.hero.ctaTrip}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link href="/assistant" className="btn-pill btn-pill--ghost">
-              {strings.nav.assistant}
-            </Link>
+    <div className="pb-4">
+      {/* Visit Dubai-style inset rounded hero */}
+      <section className="hero-shell full-bleed">
+        <div className="hero-frame">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={heroImage}
+            alt="Visit Cameroon"
+            className="hero-frame__media absolute inset-0 h-full w-full object-cover"
+            fetchPriority="high"
+            referrerPolicy="no-referrer"
+          />
+          <div className="hero-frame__shade" />
+          <div className="relative z-10 w-full max-w-3xl px-6 pb-10 pt-24 sm:px-10 sm:pb-14 md:px-14">
+            <p className="fade-up text-xs font-semibold uppercase tracking-[0.28em] text-[var(--cm-yellow)]">
+              Visit Cameroon
+              {ready && source === "supabase" ? ` · ${places.length} lieux` : ""}
+            </p>
+            <h1 className="fade-up-delay brand-wordmark mt-3 text-4xl text-white sm:text-5xl md:text-6xl">
+              {strings.hero.title}
+            </h1>
+            <p className="fade-up-delay-2 mt-4 max-w-xl text-base text-white/90 sm:text-lg">
+              {strings.hero.subtitle}
+            </p>
+            <div className="fade-up-delay-2 mt-8 flex flex-wrap gap-3">
+              <Link href="/things-to-do" className="btn-pill btn-pill--light">
+                {strings.hero.ctaAssistant}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/trip" className="btn-pill btn-pill--ghost">
+                {strings.hero.ctaTrip}
+              </Link>
+              <Link href="/assistant" className="btn-pill btn-pill--ghost">
+                {strings.nav.assistant}
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl space-y-24 px-4 py-16 sm:px-6">
-        {/* Experience curator */}
+      <div className="mx-auto max-w-7xl space-y-20 px-4 py-14 sm:px-6">
+        {/* Experience curator — Visit Dubai pattern */}
         <section>
-          <p className="section-kicker">
-            {isFr ? "Composer" : "Compose"}
-          </p>
-          <div className="cm-stripe mt-3 mb-4" />
-          <h2 className="section-title text-3xl sm:text-4xl md:text-5xl">
+          <div className="cm-stripe mb-4" />
+          <h2 className="section-title text-3xl sm:text-4xl">
             {strings.home.experienceTitle}
           </h2>
           <p className="mt-3 max-w-2xl text-[var(--muted)]">
@@ -187,7 +192,7 @@ export default function Home() {
                     {on ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
                   </span>
                   <span className="absolute inset-x-0 bottom-0 p-4 text-white">
-                    <span className="font-[family-name:var(--font-display)] text-xl font-semibold sm:text-2xl">
+                    <span className="text-base font-semibold">
                       {isFr ? exp.labelFr : exp.labelEn}
                     </span>
                   </span>
@@ -205,11 +210,8 @@ export default function Home() {
         <section>
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="section-kicker">
-                {isFr ? "À vivre" : "Must do"}
-              </p>
-              <div className="cm-stripe mt-3 mb-3" />
-              <h2 className="section-title text-3xl sm:text-4xl md:text-5xl">
+              <div className="cm-stripe mb-3" />
+              <h2 className="section-title text-3xl sm:text-4xl">
                 {strings.home.mustDo}
               </h2>
             </div>
@@ -409,27 +411,28 @@ export default function Home() {
                   <Link
                     key={area.id}
                     href={area.href}
-                    className="media-card aspect-[4/5]"
+                    className="group overflow-hidden rounded-[1.35rem] border border-[var(--line)] bg-white shadow-sm"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={area.image}
-                      alt={isFr ? area.nameFr : area.nameEn}
-                      loading="lazy"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="media-card__shade" />
-                    <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--cm-yellow)]">
+                    <div className="media-card aspect-[16/10] rounded-none">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={area.image}
+                        alt={isFr ? area.nameFr : area.nameEn}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                    <div className="p-5">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--cm-green)]">
                         {isFr ? "Aire culturelle" : "Cultural area"}
                       </p>
-                      <h3 className="mt-1 font-[family-name:var(--font-display)] text-2xl">
+                      <h3 className="mt-1 font-[family-name:var(--font-display)] text-2xl group-hover:underline">
                         {isFr ? area.nameFr : area.nameEn}
                       </h3>
-                      <p className="mt-2 line-clamp-3 text-sm text-white/80">
+                      <p className="mt-2 line-clamp-3 text-sm text-[var(--muted)]">
                         {isFr ? area.summaryFr : area.summaryEn}
                       </p>
-                      <p className="mt-3 text-[11px] font-medium text-white/70">
+                      <p className="mt-3 text-[11px] font-medium text-[var(--cm-red)]">
                         {sites.length} {isFr ? "lieux" : "places"} ·{" "}
                         {area.regionIds.length}{" "}
                         {isFr ? "régions" : "regions"}
@@ -470,28 +473,32 @@ export default function Home() {
               <Link
                 key={eco.id}
                 href={eco.href}
-                className="media-card aspect-[4/5]"
+                className="group overflow-hidden rounded-[1.25rem] border border-[var(--line)] bg-white shadow-sm"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={eco.image}
-                  alt={isFr ? eco.nameFr : eco.nameEn}
-                  loading="lazy"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="media-card__shade" />
-                <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--cm-yellow)]">
+                <div className="media-card aspect-[16/10] rounded-none">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={eco.image}
+                    alt={isFr ? eco.nameFr : eco.nameEn}
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+                <div className="p-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--cm-green)]">
                     {isFr ? eco.cityFr : eco.cityEn}
                   </p>
-                  <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl sm:text-2xl">
+                  <h3 className="mt-1 font-[family-name:var(--font-display)] text-xl group-hover:underline">
                     {isFr ? eco.nameFr : eco.nameEn}
                   </h3>
-                  <p className="mt-2 line-clamp-2 text-sm text-white/80">
+                  <p className="mt-2 line-clamp-2 text-sm text-[var(--muted)]">
                     {isFr ? eco.summaryFr : eco.summaryEn}
                   </p>
-                  <p className="mt-3 text-xs font-semibold text-white">
+                  <p className="mt-3 text-xs font-semibold text-[var(--ink)]">
                     {isFr ? eco.priceFr : eco.priceEn}
+                  </p>
+                  <p className="mt-1 text-[10px] text-[var(--muted)]">
+                    {isFr ? eco.sourceNoteFr : eco.sourceNoteEn}
                   </p>
                 </div>
               </Link>
@@ -499,31 +506,76 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Curate CTA band */}
-        <section className="cta-band relative isolate">
-          <div
-            className="pointer-events-none absolute inset-0 opacity-25"
-            aria-hidden
-            style={{
-              backgroundImage: `url(${experienceMedia.plage})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-          />
-          <div className="relative z-10 max-w-2xl p-8 sm:p-12 lg:p-14">
-            <p className="hero-kicker text-white/70">
-              {isFr ? "Assistant IA" : "AI guide"}
-            </p>
-            <h2 className="section-title mt-3 text-3xl sm:text-4xl md:text-5xl">
-              {strings.home.curate}
-            </h2>
-            <p className="mt-4 max-w-md text-white/78">
-              {strings.home.curateBody}
-            </p>
-            <Link href="/assistant" className="btn-pill btn-pill--light mt-8">
-              {strings.nav.assistant}
-              <ArrowRight className="h-4 w-4" />
+        <section className="overflow-hidden rounded-[2rem] border border-[var(--line)] bg-white">
+          <div className="grid lg:grid-cols-2">
+            <div className="p-8 sm:p-10">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--cm-green)]">
+                {strings.nav.games}
+              </p>
+              <h2 className="section-title mt-2 text-3xl sm:text-4xl">
+                {strings.games.title}
+              </h2>
+              <p className="mt-4 max-w-md text-[var(--muted)]">
+                {strings.games.choose}
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link href="/games/langue" className="btn-pill btn-pill--green">
+                  {strings.games.language}
+                </Link>
+                <Link
+                  href="/games/culture"
+                  className="rounded-full border border-[var(--line)] px-5 py-2.5 text-sm font-semibold"
+                >
+                  {strings.games.culture}
+                </Link>
+              </div>
+            </div>
+            <Link href="/games" className="relative min-h-[220px] overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={experienceMedia.culture}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+                referrerPolicy="no-referrer"
+              />
+              <span className="absolute bottom-5 left-5 rounded-full bg-white/95 px-4 py-2 text-sm font-semibold text-[var(--cm-green)]">
+                {isFr ? "Choisir un volet →" : "Choose a track →"}
+              </span>
             </Link>
+          </div>
+        </section>
+
+        {/* Curate CTA band */}
+        <section className="overflow-hidden rounded-[2rem] bg-[var(--cm-green-deep)] text-white">
+          <div className="grid gap-8 p-8 sm:p-10 lg:grid-cols-2 lg:items-center">
+            <div>
+              <h2 className="section-title text-3xl sm:text-4xl">
+                {strings.home.curate}
+              </h2>
+              <p className="mt-4 max-w-md text-white/75">
+                {strings.home.curateBody}
+              </p>
+              <Link
+                href="/assistant"
+                className="btn-pill btn-pill--light mt-8"
+              >
+                {strings.nav.assistant}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <div
+              className="relative min-h-[240px] overflow-hidden rounded-[1.35rem]"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={experienceMedia.plage}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="lazy"
+                referrerPolicy="no-referrer"
+              />
+            </div>
           </div>
         </section>
       </div>

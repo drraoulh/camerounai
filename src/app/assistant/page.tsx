@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import Link from "next/link";
-import { Bot, Map, Mic, Languages } from "lucide-react";
+import { Bot, Map, Mic, Sparkles, Languages } from "lucide-react";
 import { ChatAssistant } from "@/components/ChatAssistant";
 import { PageShell } from "@/components/PageShell";
 import { useLocale } from "@/components/LocaleProvider";
@@ -39,18 +39,19 @@ export default function AssistantPage() {
     <PageShell>
       <section className="assistant-hero mb-8 overflow-hidden rounded-[1.75rem] sm:mb-10">
         <div className="assistant-hero__inner">
-          <p className="hero-kicker text-white/70">
+          <p className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--cm-yellow)]">
+            <Sparkles className="h-3.5 w-3.5" />
             {isFr ? "Guide conversationnel" : "Conversational guide"}
           </p>
-          <h1 className="section-title mt-3 max-w-2xl text-4xl text-white sm:text-5xl md:text-6xl">
+          <h1 className="section-title mt-4 max-w-2xl text-3xl text-white sm:text-4xl md:text-5xl">
             {strings.assistant.title}
           </h1>
-          <p className="mt-4 max-w-xl text-base text-white/80 sm:text-lg">
+          <p className="mt-3 max-w-xl text-base text-white/80 sm:text-lg">
             {isFr
-              ? "Demandez un séjour, un budget, un parc ou une expression locale. Le chat flottant reste aussi disponible sur toutes les pages."
-              : "Ask for a trip, a budget, a park or a local phrase. The floating chat is also available on every page."}
+              ? "Demandez un séjour, un budget, un parc — ou comment on dit un mot. L’IA répond tout de suite, et joue l’enregistrement du locuteur."
+              : "Ask for a trip, a budget, a park — or how to say a word. The AI answers at once, and plays the speaker’s recording."}
           </p>
-          <div className="mt-7 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/trip" className="btn-pill btn-pill--light">
               {strings.nav.plan}
             </Link>
@@ -65,11 +66,14 @@ export default function AssistantPage() {
         {FEATURES.map((f) => {
           const Icon = f.icon;
           return (
-            <article key={f.titleEn} className="surface-panel p-5">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--cm-green-deep)]">
+            <article
+              key={f.titleEn}
+              className="rounded-[1.15rem] border border-[var(--line)] bg-white p-4 sm:p-5"
+            >
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[var(--cm-green)]">
                 <Icon className="h-4 w-4" />
               </span>
-              <h2 className="mt-3 font-[family-name:var(--font-display)] text-xl font-semibold">
+              <h2 className="mt-3 font-[family-name:var(--font-display)] text-lg">
                 {isFr ? f.titleFr : f.titleEn}
               </h2>
               <p className="mt-1.5 text-sm leading-relaxed text-[var(--muted)]">
@@ -92,7 +96,7 @@ export default function AssistantPage() {
           </div>
         }
       >
-        <ChatAssistant variant="full" />
+        <ChatAssistant />
       </Suspense>
     </PageShell>
   );
